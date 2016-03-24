@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"encoding/json"
 	"io/ioutil"
-	"fmt"
-
 )
 
 /// Chasm Types ///
@@ -42,6 +40,20 @@ func (p ChasmPref) NeedSetup() bool {
 	return p.RegisteredServices() < 2
 }
 
+// AllCloudStores combines all the cloud stores
+func (p ChasmPref) AllCloudStores() []CloudStore {
+
+	// adjust length for new store types
+	cloudStores := make([]CloudStore, len(p.FolderStores))
+
+	// all other cloud stores go here
+	for i, fs := range p.FolderStores {
+		cloudStores[i] = CloudStore(fs)
+	}
+
+	return cloudStores
+}
+
 // Save saves the chasm preferences
 func (p ChasmPref) Save() {
 	chasmFilePath := p.root+string(filepath.Separator)+chasmPrefFile
@@ -70,7 +82,6 @@ func CreateOrLoadChasmDir(root string) {
 		preferences.FileMap = make(map[string]ShareID)
 	} else {
 		json.Unmarshal(chasmFileBytes, &preferences)
-		fmt.Println(preferences.FolderStores[0].Path)
 	}
 
 	preferences.root = root
@@ -80,10 +91,40 @@ func CreateOrLoadChasmDir(root string) {
 // AddFile secret shares the file, and uploads each share to corresponding services
 // if the file exists already, we delete the remote share first by its shareId
 func AddFile(path string) {
+	// create unique share_id
+	sid := RandomShareID()
+	preferences.FileMap[path] = sid
 
+	// read the file
+	fileBytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		color.Red("Cannot read file: %s", err)
+		return
+	}
+
+	// create the shares
+	allCloudStores := preferences.AllCloudStores()
+	shares := CreateShares(fileBytes, sid, len(allCloudStores))
+
+	// iteratively upload shares with each cloud store
+	for i, cs := range allCloudStores {
+		cs.Upload(shares[i])
+	}
 }
 
 // DeleteFile deletes the remote share of this path by its shareId
 func DeleteFile(path string) {
+	allCloudStores := preferences.AllCloudStores()
 
+	if sid, ok := preferences.FileMap[path]; ok {
+		// iteratively delete shares from each cloud store
+		for _, cs := range allCloudStores {
+			cs.Delete(ShareID(sid))
+		}
+
+		color.Green("Deleted share from all cloud stores.")
+		return
+	}
+
+	color.Red("Path %s is not tracked. Cannot find share id.", path)
 }

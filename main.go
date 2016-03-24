@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
-	"fmt"
 	"os"
 )
 
@@ -11,7 +10,7 @@ import (
 
 func loadChasm(c *cli.Context) {
 	if chasmRoot == "" {
-		fmt.Println("Error: missing chasm root path.")
+		color.Red("Error: missing chasm root path.")
 		os.Exit(2)
 		return
 	}
@@ -23,7 +22,7 @@ func startChasm(c *cli.Context) {
 	loadChasm(c)
 
 	if preferences.NeedSetup() {
-		fmt.Println("Error: not enough services. Add a service with add .")
+		color.Red("Error: not enough services. Add a service with add .")
 		return
 	}
 
@@ -34,10 +33,17 @@ func addFolder(c *cli.Context) {
 	loadChasm(c)
 	var folderStore FolderStore
 
+	if len(c.Args()) < 1 {
+		color.Red("Error: missing folder path")
+		return
+	}
+
+	folderStore.Path = c.Args()[0]
 	folderStore.Setup()
-	folderStore.Path = "sdfsdf"
 	preferences.FolderStores = append(preferences.FolderStores, folderStore)
 	preferences.Save()
+
+	color.Green("Success! Added folder store: %s", folderStore.Path)
 }
 
 func addDropbox(c *cli.Context) {
