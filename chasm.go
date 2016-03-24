@@ -1,21 +1,21 @@
 package main
 
+import (
+	"os"
+	"github.com/fatih/color"
+	"path/filepath"
+	"encoding/json"
+	"io/ioutil"
+	"fmt"
+
+)
+
 /// Chasm Types ///
-
-// ShareID is a uniqiue id to represent uploaded shares
-type ShareID string
-
-// Share represents a secret share of a file
-type Share struct {
-	SID  ShareID
-	Data []byte
-}
 
 // CloudStore represents an external cloud storage service that is compatible
 // with Chasm
 type CloudStore interface {
-	Setup(username, password string)
-	SetupInteractively()
+	Setup()
 
 	Upload(share Share)
 	Delete(sid ShareID)
@@ -23,32 +23,58 @@ type CloudStore interface {
 
 // ChasmPref represents user/application preferences
 type ChasmPref struct {
-	// the cloud services sharing across
-	RegisteredServices []CloudStore
+	root string
 
-	// the chasm secure directory where everything happens
-	ChasmDir string
+	// the cloud services sharing across
+	FolderStores []FolderStore	`json:"services"`
 
 	// maps files to their shareId
-	FileMap map[string]ShareID
+	FileMap map[string]ShareID	`json:"files"`
 }
+
+// RegisteredServices counts all services
+func (p ChasmPref) RegisteredServices() int {
+	return len(p.FolderStores)
+}
+
+// NeedSetup checks if there are enough services to run
+func (p ChasmPref) NeedSetup() bool {
+	return p.RegisteredServices() < 2
+}
+
+// Save saves the chasm preferences
+func (p ChasmPref) Save() {
+	chasmFilePath := p.root+string(filepath.Separator)+chasmPrefFile
+	chasmFileBytes, err := json.Marshal(preferences)
+	check(err)
+
+	ioutil.WriteFile(chasmFilePath, chasmFileBytes, 0660)
+}
+
 
 /// Chasm Functions ///
 
 var preferences ChasmPref
+const chasmPrefFile = ".chasm"
 
 // CreateOrLoadChasmDir creates the root *chasm* folder on the system
 // if it does not exist or finds an existing directory
 // returns if true if newly created
-func CreateOrLoadChasmDir(root string) bool {
-	preferences = ChasmPref{}
+func CreateOrLoadChasmDir(root string) {
+	os.MkdirAll(root, 0777)
 
-	return true
-}
+	chasmFilePath := root + chasmPrefFile
+	chasmFileBytes, err := ioutil.ReadFile(chasmFilePath)
+	if err != nil {
+		color.Green("Creating new .chasm secure folder")
+		preferences.FileMap = make(map[string]ShareID)
+	} else {
+		json.Unmarshal(chasmFileBytes, &preferences)
+		fmt.Println(preferences.FolderStores[0].Path)
+	}
 
-// RunSetup runs the setup wizard to get started
-func RunSetup() {
-
+	preferences.root = root
+	preferences.Save()
 }
 
 // AddFile secret shares the file, and uploads each share to corresponding services
