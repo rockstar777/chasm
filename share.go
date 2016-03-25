@@ -59,9 +59,9 @@ func xor(a, b []byte) []byte {
 	return res
 }
 
-// RandomShareID randomly generates a 32 byte base64URL encoded string
+// RandomShareID randomly generates a 16 byte base64URL encoded string
 func RandomShareID() ShareID {
-	randomBytes := make([]byte, 32)
+	randomBytes := make([]byte, 16)
 	_, err := rand.Read(randomBytes)
 	if err != nil {
 		panic(err)
