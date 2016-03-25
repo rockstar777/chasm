@@ -80,6 +80,7 @@ func CreateOrLoadChasmDir(root string) {
 	if err != nil {
 		color.Green("Creating new .chasm secure folder")
 		preferences.FileMap = make(map[string]ShareID)
+		preferences.FileMap[chasmFilePath] = ShareID(chasmPrefFile)
 	} else {
 		json.Unmarshal(chasmFileBytes, &preferences)
 	}
@@ -118,19 +119,26 @@ func AddFile(path string) {
 	for i, cs := range allCloudStores {
 		cs.Upload(shares[i])
 	}
+
+	// only save pref if it's not a .chasm
+	if sid != ShareID(".chasm") {
+		preferences.Save()
+	}
+
 }
 
 // DeleteFile deletes the remote share of this path by its shareId
 func DeleteFile(path string) {
 	allCloudStores := preferences.AllCloudStores()
 
-	delete(preferences.FileMap, path)
-
 	if sid, ok := preferences.FileMap[path]; ok {
 		// iteratively delete shares from each cloud store
 		for _, cs := range allCloudStores {
 			cs.Delete(ShareID(sid))
 		}
+
+		delete(preferences.FileMap, path)
+		preferences.Save()
 
 		color.Green("Deleted share from all cloud stores.")
 		return

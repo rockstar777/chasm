@@ -27,7 +27,11 @@ func StartWatching(path string) {
 				log.Println("event:", event)
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					AddFile(event.Name)
-				} else if event.Op&fsnotify.Rename == fsnotify.Rename {
+				}
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					AddFile(event.Name)
+				}
+				if event.Op&fsnotify.Rename == fsnotify.Rename {
 					DeleteFile(event.Name)
 				}
 			case err := <-watcher.Errors:

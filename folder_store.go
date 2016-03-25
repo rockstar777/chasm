@@ -19,11 +19,6 @@ func (f FolderStore) Setup() {
 // Upload writes a share to to the folder
 func (f FolderStore) Upload(share Share) {
     sharePath := f.Path + string(share.SID)
-    if _, err := os.Stat(sharePath); err == nil {
-        color.Red("Share %s already exists.", sharePath)
-        return
-    }
-
     err := ioutil.WriteFile(sharePath, share.Data, 0770)
     if err != nil {
         color.Red("Error: %s", err)
@@ -47,5 +42,5 @@ func (f FolderStore) Delete(sid ShareID) {
         return
     }
 
-    color.Green("Share %s deleted successfully!", sid)
+    color.Yellow("Share %s deleted successfully!", sid)
 }
