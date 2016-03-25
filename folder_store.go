@@ -30,7 +30,7 @@ func (f FolderStore) Upload(share Share) {
         return
     }
 
-    color.Green("Share %s saved successfully!", share.SID)
+    color.Green("Share %s saved successfully!", sharePath)
 }
 
 // Delete deletes the share by its shareID

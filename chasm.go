@@ -91,9 +91,17 @@ func CreateOrLoadChasmDir(root string) {
 // AddFile secret shares the file, and uploads each share to corresponding services
 // if the file exists already, we delete the remote share first by its shareId
 func AddFile(path string) {
-	// create unique share_id
-	sid := RandomShareID()
-	preferences.FileMap[path] = sid
+
+	var sid ShareID
+	if path == preferences.root + chasmPrefFile {
+		// if path is the .chasm, use the const sid
+		sid = ShareID(".chasm")
+	} else {
+		// create unique share_id
+		sid = RandomShareID()
+		preferences.FileMap[path] = sid
+	}
+
 
 	// read the file
 	fileBytes, err := ioutil.ReadFile(path)
@@ -115,6 +123,8 @@ func AddFile(path string) {
 // DeleteFile deletes the remote share of this path by its shareId
 func DeleteFile(path string) {
 	allCloudStores := preferences.AllCloudStores()
+
+	delete(preferences.FileMap, path)
 
 	if sid, ok := preferences.FileMap[path]; ok {
 		// iteratively delete shares from each cloud store

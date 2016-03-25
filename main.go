@@ -27,6 +27,7 @@ func startChasm(c *cli.Context) {
 	}
 
 	// start the watcher
+	StartWatching(preferences.root)
 }
 
 func addFolder(c *cli.Context) {
