@@ -2,6 +2,8 @@ package main
 
 import (
 	"os"
+	"os/user"
+	"path"
 
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
@@ -10,12 +12,6 @@ import (
 /// chasm commands ///
 
 func loadChasm(c *cli.Context) {
-	if chasmRoot == "" {
-		color.Red("Error: missing chasm root path.")
-		os.Exit(2)
-		return
-	}
-
 	CreateOrLoadChasmDir(chasmRoot)
 }
 
@@ -23,12 +19,25 @@ func startChasm(c *cli.Context) {
 	loadChasm(c)
 
 	if preferences.NeedSetup() {
-		color.Red("Error: not enough services. Add a service with add .")
+		color.Red("Warning: not enough services.")
 		return
 	}
 
 	// start the watcher
+	color.Green("Starting chasm. Listening on %s", preferences.root)
 	StartWatching(preferences.root)
+}
+
+func statusChasm(c *cli.Context) {
+	loadChasm(c)
+
+	color.Green("Chasm root: %s", chasmRoot)
+	for _, cs := range preferences.AllCloudStores() {
+		color.Cyan(cs.Description())
+	}
+	if preferences.NeedSetup() {
+		color.Red("Warning: not enough services.")
+	}
 }
 
 func addFolder(c *cli.Context) {
@@ -64,16 +73,20 @@ var chasmRoot string
 func main() {
 	app := cli.NewApp()
 
-	app.Name = "chasm"
-	app.Usage = "A secret-sharing based secure cloud backup solution."
+	app.Name = color.GreenString("chasm")
+	app.Usage = color.GreenString("A secret-sharing based secure cloud backup solution.")
 	app.EnableBashCompletion = true
-	app.Version = "0.0.1"
+	app.Version = "0.1"
+
+	usr, _ := user.Current()
+	defaultRoot := path.Join(usr.HomeDir, "Chasm")
+	chasmRoot = defaultRoot
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "root",
-			Value:       "",
-			Usage:       "Chasm root directory. Example: --root=/home/alex",
+			Value:       defaultRoot,
+			Usage:       "Destination of the Chasm secure folder.",
 			Destination: &chasmRoot,
 		},
 	}
@@ -82,13 +95,19 @@ func main() {
 		{
 			Name:    "start",
 			Aliases: nil,
-			Usage:   "Start running chasm. start --root=<chasm_root>.",
+			Usage:   "Start running chasm.",
 			Action:  startChasm,
+		},
+		{
+			Name:    "status",
+			Aliases: nil,
+			Usage:   "Prints out the current Chasm setup.",
+			Action:  statusChasm,
 		},
 		{
 			Name:    "add",
 			Aliases: []string{"a"},
-			Usage:   "Add a new cloud store to chasm. --root=<chasm_root> add <service>",
+			Usage:   "Add a new cloud store to chasm.",
 			Subcommands: []cli.Command{
 				{
 					Name:   "folder",

@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/fatih/color"
 )
@@ -20,7 +21,7 @@ func (f FolderStore) Setup() {
 
 // Upload writes a share to to the folder
 func (f FolderStore) Upload(share Share) {
-	sharePath := f.Path + string(share.SID)
+	sharePath := path.Join(f.Path, string(share.SID))
 	err := ioutil.WriteFile(sharePath, share.Data, 0770)
 	if err != nil {
 		color.Red("Error: %s", err)
@@ -45,4 +46,8 @@ func (f FolderStore) Delete(sid ShareID) {
 	}
 
 	color.Yellow("Share %s deleted successfully!", sid)
+}
+
+func (f FolderStore) Description() string {
+	return "Folder store at: " + f.Path
 }

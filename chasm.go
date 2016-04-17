@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/fatih/color"
@@ -18,6 +19,8 @@ type CloudStore interface {
 
 	Upload(share Share)
 	Delete(sid ShareID)
+
+	Description() string
 }
 
 // ChasmPref represents user/application preferences
@@ -76,7 +79,7 @@ const chasmPrefFile = ".chasm"
 func CreateOrLoadChasmDir(root string) {
 	os.MkdirAll(root, 0777)
 
-	chasmFilePath := root + chasmPrefFile
+	chasmFilePath := path.Join(root, chasmPrefFile)
 	chasmFileBytes, err := ioutil.ReadFile(chasmFilePath)
 	if err != nil {
 		color.Green("Creating new .chasm secure folder")
@@ -92,20 +95,19 @@ func CreateOrLoadChasmDir(root string) {
 
 // AddFile secret shares the file, and uploads each share to corresponding services
 // if the file exists already, we delete the remote share first by its shareId
-func AddFile(path string) {
+func AddFile(filePath string) {
 
 	var sid ShareID
-	if path == preferences.root+chasmPrefFile {
-		// if path is the .chasm, use the const sid
-		sid = ShareID(".chasm")
+	if existingSID, ok := preferences.FileMap[filePath]; ok {
+		sid = existingSID
 	} else {
 		// create unique share_id
 		sid = RandomShareID()
-		preferences.FileMap[path] = sid
+		preferences.FileMap[filePath] = sid
 	}
 
 	// read the file
-	fileBytes, err := ioutil.ReadFile(path)
+	fileBytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		color.Red("Cannot read file: %s", err)
 		return

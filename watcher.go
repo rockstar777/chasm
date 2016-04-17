@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strings"
 
 	"gopkg.in/fsnotify.v1"
 )
@@ -25,6 +26,12 @@ func StartWatching(path string) {
 			select {
 			case event := <-watcher.Events:
 				log.Println("event:", event)
+
+				if strings.Contains(event.Name, ".DS_Store") {
+					log.Println("Skipping ignored file.")
+					continue
+				}
+
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					AddFile(event.Name)
 				}
