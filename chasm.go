@@ -132,7 +132,6 @@ func IsValidPath(filePath string) bool {
 // AddFile secret shares the file, and uploads each share to corresponding services
 // if the file exists already, we delete the remote share first by its shareId
 func AddFile(filePath string) {
-	fmt.Println("ADD FILE FOR", filePath)
 	if !IsValidPath(filePath) {
 		color.Red("Path %s is in .chasmignore. No actions will be performed.", filePath)
 		return
@@ -176,6 +175,7 @@ func DeleteFile(filePath string) {
 		color.Red("Path %s is in .chasmignore. No actions will be performed.", filePath)
 		return
 	}
+
 	allCloudStores := preferences.AllCloudStores()
 
 	if sid, ok := preferences.FileMap[filePath]; ok {
