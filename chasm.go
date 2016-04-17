@@ -172,8 +172,6 @@ func AddFile(filePath string) {
 
 // DeleteFile deletes the remote share of this path by its shareId
 func DeleteFile(filePath string) {
-	fmt.Println("DELETE FILE FOR", filePath)
-
 	if !IsValidPath(filePath) {
 		color.Red("Path %s is in .chasmignore. No actions will be performed.", filePath)
 		return
