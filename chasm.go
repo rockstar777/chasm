@@ -1,13 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
+	"fmt"
+	"github.com/fatih/color"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
-
-	"github.com/fatih/color"
 )
 
 /// Chasm Types ///
@@ -72,6 +73,7 @@ func (p ChasmPref) Save() {
 var preferences ChasmPref
 
 const chasmPrefFile = ".chasm"
+const chasmIgnoreFile = ".chasmignore"
 
 // CreateOrLoadChasmDir creates the root *chasm* folder on the system
 // if it does not exist or finds an existing directory
@@ -89,13 +91,52 @@ func CreateOrLoadChasmDir(root string) {
 		json.Unmarshal(chasmFileBytes, &preferences)
 	}
 
+	chasmIgnorePath := path.Join(root, chasmIgnoreFile)
+	if _, err := os.Stat(chasmIgnorePath); os.IsNotExist(err) {
+		preferences.FileMap[chasmIgnorePath] = ShareID(chasmIgnorePath)
+		os.Create(chasmIgnorePath)
+	}
+
 	preferences.root = root
 	preferences.Save()
+}
+
+// IsValidPath checks if a file path is vaild, i.e. it doesn't match any patterns
+// in the .chasmignore file
+func IsValidPath(filePath string) bool {
+	base := filepath.Base(filePath)
+	chasmIgnorePath := path.Join(preferences.root, chasmIgnoreFile)
+	chasmIgnore, err := os.Open(chasmIgnorePath)
+	if err != nil {
+		return true
+	}
+	scanner := bufio.NewScanner(chasmIgnore)
+	for scanner.Scan() {
+		pattern := scanner.Text()
+		ok, err := filepath.Match(pattern, base)
+		if ok {
+			return false
+		}
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	// check for errors
+	if err := scanner.Err(); err != nil {
+		fmt.Println(err)
+	}
+	return true
 }
 
 // AddFile secret shares the file, and uploads each share to corresponding services
 // if the file exists already, we delete the remote share first by its shareId
 func AddFile(filePath string) {
+	fmt.Println("ADD FILE FOR", filePath)
+	if !IsValidPath(filePath) {
+		color.Red("Path %s is in .chasmignore. No actions will be performed.", filePath)
+		return
+	}
 
 	var sid ShareID
 	if existingSID, ok := preferences.FileMap[filePath]; ok {
@@ -130,21 +171,27 @@ func AddFile(filePath string) {
 }
 
 // DeleteFile deletes the remote share of this path by its shareId
-func DeleteFile(path string) {
+func DeleteFile(filePath string) {
+	fmt.Println("DELETE FILE FOR", filePath)
+
+	if !IsValidPath(filePath) {
+		color.Red("Path %s is in .chasmignore. No actions will be performed.", filePath)
+		return
+	}
 	allCloudStores := preferences.AllCloudStores()
 
-	if sid, ok := preferences.FileMap[path]; ok {
+	if sid, ok := preferences.FileMap[filePath]; ok {
 		// iteratively delete shares from each cloud store
 		for _, cs := range allCloudStores {
 			cs.Delete(ShareID(sid))
 		}
 
-		delete(preferences.FileMap, path)
+		delete(preferences.FileMap, filePath)
 		preferences.Save()
 
 		color.Green("Deleted share from all cloud stores.")
 		return
 	}
 
-	color.Red("Path %s is not tracked. Cannot find share id.", path)
+	color.Red("Path %s is not tracked. Cannot find share id.", filePath)
 }
