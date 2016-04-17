@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/fatih/color"
 )
 
 /// Chasm Types ///
@@ -95,9 +96,14 @@ func CreateOrLoadChasmDir(root string) {
 	}
 
 	chasmIgnorePath := path.Join(root, chasmIgnoreFile)
-	if _, err := os.Stat(chasmIgnorePath); os.IsNotExist(err) {
-		preferences.FileMap[chasmIgnorePath] = ShareID(chasmIgnorePath)
-		os.Create(chasmIgnorePath)
+	_, err = ioutil.ReadFile(chasmIgnorePath)
+	if err != nil {
+		preferences.FileMap[chasmIgnorePath] = ShareID(chasmIgnoreFile)
+		// add *.DS_Store to ignore file by default
+		errWrite := ioutil.WriteFile(chasmIgnorePath, []byte(".DS_Store\n"), 0777)
+		if errWrite != nil {
+			color.Red("Error: could not write to %s: %s", chasmFilePath, errWrite)
+		}
 	}
 
 	preferences.root = root
