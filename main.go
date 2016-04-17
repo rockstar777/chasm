@@ -40,6 +40,19 @@ func statusChasm(c *cli.Context) {
 	}
 }
 
+func restoreChasm(c *cli.Context) {
+	loadChasm(c)
+
+	if preferences.NeedSetup() {
+		color.Red("Warning: not enough services. Cannot Restore.")
+		return
+	}
+
+	// start the watcher
+	color.Green("Preparing to restore chasm to %s", preferences.root)
+	Restore()
+}
+
 func addFolder(c *cli.Context) {
 	loadChasm(c)
 	var folderStore FolderStore
@@ -125,6 +138,12 @@ func main() {
 					Action: addDrive,
 				},
 			},
+		},
+		{
+			Name:    "restore",
+			Aliases: nil,
+			Usage:   "Restores chasm after repeating setup.",
+			Action:  restoreChasm,
 		},
 	}
 

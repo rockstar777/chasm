@@ -48,6 +48,15 @@ func (f FolderStore) Delete(sid ShareID) {
 	color.Yellow("Share %s deleted successfully!", sid)
 }
 
+// Restore downloads the shares
+func (f FolderStore) Restore() string {
+	// do nothing, folder store exists locally already
+	// return the existing path
+	return f.Path
+}
+
+// Description prints out human-readable statement
+// about the folder store path
 func (f FolderStore) Description() string {
-	return "Folder store at: " + f.Path
+	return "FolderStore located at: " + f.Path
 }

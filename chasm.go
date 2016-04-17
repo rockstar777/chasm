@@ -21,6 +21,9 @@ type CloudStore interface {
 	Upload(share Share)
 	Delete(sid ShareID)
 
+	//Restore downloads shares to local restore path
+	Restore() string
+
 	Description() string
 }
 
@@ -192,4 +195,54 @@ func DeleteFile(filePath string) {
 	}
 
 	color.Red("Path %s is not tracked. Cannot find share id.", filePath)
+}
+
+// Restore shares to the original files
+func Restore() {
+	allCloudStores := preferences.AllCloudStores()
+	sharePaths := make([]string, len(allCloudStores))
+
+	// (1) first get all shares
+	for i, cs := range allCloudStores {
+		sharePaths[i] = cs.Restore()
+	}
+
+	// (2) next restore .chasm file
+	chasmFileBytes := restoreShareID(ShareID(chasmPrefFile), sharePaths)
+
+	var restoredPrefs ChasmPref
+	err := json.Unmarshal(chasmFileBytes, &restoredPrefs)
+	if err != nil {
+		color.Red("Cannot restore chasm preferecnes file from cloud services.")
+		return
+	}
+
+	// (3) finally, for the remaining files, restore and save
+	for filePath, sid := range restoredPrefs.FileMap {
+		fileBytes := restoreShareID(sid, sharePaths)
+		err := ioutil.WriteFile(filePath, fileBytes, 0770)
+		if err != nil {
+			color.Red("Error writing restored file %s: %s", filePath, err)
+			return
+		}
+	}
+	color.Green("Done. Restored all files!")
+}
+
+func restoreShareID(sid ShareID, sharePaths []string) []byte {
+	fileShares := make([]Share, len(sharePaths))
+
+	for i, sp := range sharePaths {
+		file := path.Join(sp, string(sid))
+		dataBytes, err := ioutil.ReadFile(file)
+		if err != nil {
+			color.Red("(Skipping share) Cannot read file %s: %s", file, err)
+			continue
+		}
+
+		share := Share{SID: sid, Data: dataBytes}
+		fileShares[i] = share
+	}
+
+	return CombineShares(fileShares)
 }
