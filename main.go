@@ -1,9 +1,10 @@
 package main
 
 import (
+	"os"
+
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
-	"os"
 )
 
 /// chasm commands ///
@@ -57,7 +58,6 @@ func addDrive(c *cli.Context) {
 	color.Red("Error: not implemented.")
 }
 
-
 /// Cli toolchain ///
 var chasmRoot string
 
@@ -69,13 +69,13 @@ func main() {
 	app.EnableBashCompletion = true
 	app.Version = "0.0.1"
 
-	app.Flags = []cli.Flag {
-	  cli.StringFlag{
-	    Name: "root",
-		Value: "",
-	    Usage: "Chasm root directory. Example: --root=/home/alex",
-		Destination: &chasmRoot,
-	  },
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:        "root",
+			Value:       "",
+			Usage:       "Chasm root directory. Example: --root=/home/alex",
+			Destination: &chasmRoot,
+		},
 	}
 
 	app.Commands = []cli.Command{
@@ -83,7 +83,7 @@ func main() {
 			Name:    "start",
 			Aliases: nil,
 			Usage:   "Start running chasm. start --root=<chasm_root>.",
-			Action: startChasm,
+			Action:  startChasm,
 		},
 		{
 			Name:    "add",
@@ -107,7 +107,6 @@ func main() {
 				},
 			},
 		},
-
 	}
 
 	app.Run(os.Args)

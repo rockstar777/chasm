@@ -1,46 +1,48 @@
 package main
 
 import (
-    "os"
-    "io/ioutil"
-    "github.com/fatih/color"
+	"io/ioutil"
+	"os"
+
+	"github.com/fatih/color"
 )
+
 // FolderStore is a fake cloud store for testing purposes. Simply write
 // shares to the folder
 type FolderStore struct {
-    Path string `json:"path"`
+	Path string `json:"path"`
 }
 
 // Setup the folder store
 func (f FolderStore) Setup() {
-    os.MkdirAll(f.Path, 0777)
+	os.MkdirAll(f.Path, 0777)
 }
 
 // Upload writes a share to to the folder
 func (f FolderStore) Upload(share Share) {
-    sharePath := f.Path + string(share.SID)
-    err := ioutil.WriteFile(sharePath, share.Data, 0770)
-    if err != nil {
-        color.Red("Error: %s", err)
-        return
-    }
+	sharePath := f.Path + string(share.SID)
+	err := ioutil.WriteFile(sharePath, share.Data, 0770)
+	if err != nil {
+		color.Red("Error: %s", err)
+		return
+	}
 
-    color.Green("Share %s saved successfully!", sharePath)
+	color.Green("Share %s saved successfully!", sharePath)
 }
 
 // Delete deletes the share by its shareID
 func (f FolderStore) Delete(sid ShareID) {
-    sharePath := f.Path + string(sid)
-    if _, err := os.Stat(sharePath); err != nil {
-        color.Red("Share %s does not exist.", sharePath)
-        return
-    }
+	sharePath := f.Path + string(sid)
+	if _, err := os.Stat(sharePath); err != nil {
+		color.Red("Share %s does not exist.", sharePath)
+		return
+	}
 
-    err := os.Remove(sharePath)
-    if err != nil {
-        color.Red("Error: could not delete file. %s", err)
-        return
-    }
+	err := os.Remove(sharePath)
+	if err != nil {
+		color.Red("Error: could not delete file. %s", err)
+		return
+	}
 
-    color.Yellow("Share %s deleted successfully!", sid)
+	color.Yellow("Share %s deleted successfully!", sid)
 }

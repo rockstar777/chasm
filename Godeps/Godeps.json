@@ -1,6 +1,7 @@
 {
-	"ImportPath": "alexgr.in/chasm",
+	"ImportPath": "github.com/agrinman/chasm",
 	"GoVersion": "go1.6",
+	"GodepVersion": "v60",
 	"Deps": [
 		{
 			"ImportPath": "github.com/codegangsta/cli",
@@ -19,6 +20,10 @@
 		{
 			"ImportPath": "github.com/mattn/go-isatty",
 			"Rev": "56b76bdf51f7708750eac80fa38b952bb9f32639"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "7a56174f0086b32866ebd746a794417edbc678a1"
 		},
 		{
 			"ImportPath": "gopkg.in/fsnotify.v1",

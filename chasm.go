@@ -1,11 +1,12 @@
 package main
 
 import (
-	"os"
-	"github.com/fatih/color"
-	"path/filepath"
 	"encoding/json"
 	"io/ioutil"
+	"os"
+	"path/filepath"
+
+	"github.com/fatih/color"
 )
 
 /// Chasm Types ///
@@ -24,10 +25,10 @@ type ChasmPref struct {
 	root string
 
 	// the cloud services sharing across
-	FolderStores []FolderStore	`json:"services"`
+	FolderStores []FolderStore `json:"svcs"`
 
 	// maps files to their shareId
-	FileMap map[string]ShareID	`json:"files"`
+	FileMap map[string]ShareID `json:"files"`
 }
 
 // RegisteredServices counts all services
@@ -56,17 +57,17 @@ func (p ChasmPref) AllCloudStores() []CloudStore {
 
 // Save saves the chasm preferences
 func (p ChasmPref) Save() {
-	chasmFilePath := p.root+string(filepath.Separator)+chasmPrefFile
+	chasmFilePath := p.root + string(filepath.Separator) + chasmPrefFile
 	chasmFileBytes, err := json.Marshal(preferences)
 	check(err)
 
 	ioutil.WriteFile(chasmFilePath, chasmFileBytes, 0660)
 }
 
-
 /// Chasm Functions ///
 
 var preferences ChasmPref
+
 const chasmPrefFile = ".chasm"
 
 // CreateOrLoadChasmDir creates the root *chasm* folder on the system
@@ -94,7 +95,7 @@ func CreateOrLoadChasmDir(root string) {
 func AddFile(path string) {
 
 	var sid ShareID
-	if path == preferences.root + chasmPrefFile {
+	if path == preferences.root+chasmPrefFile {
 		// if path is the .chasm, use the const sid
 		sid = ShareID(".chasm")
 	} else {
@@ -102,7 +103,6 @@ func AddFile(path string) {
 		sid = RandomShareID()
 		preferences.FileMap[path] = sid
 	}
-
 
 	// read the file
 	fileBytes, err := ioutil.ReadFile(path)
