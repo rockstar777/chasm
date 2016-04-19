@@ -24,6 +24,8 @@ type CloudStore interface {
 	Restore() string
 
 	Description() string
+
+	Clean()
 }
 
 // ChasmPref represents user/application preferences

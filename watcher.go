@@ -1,8 +1,10 @@
 package main
 
 import (
-	"gopkg.in/fsnotify.v1"
 	"log"
+	"os"
+
+	"gopkg.in/fsnotify.v1"
 )
 
 // StartWatching a path indefinitely.
@@ -25,14 +27,25 @@ func StartWatching(path string) {
 			case event := <-watcher.Events:
 				log.Println("event:", event)
 
+				isDir := isDir(event.Name)
+
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					AddFile(event.Name)
+					if isDir {
+						watcher.Add(event.Name)
+					}
 				}
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					AddFile(event.Name)
+					if isDir {
+						watcher.Add(event.Name)
+					}
 				}
 				if event.Op&fsnotify.Rename == fsnotify.Rename {
 					DeleteFile(event.Name)
+					if isDir {
+						watcher.Remove(event.Name)
+					}
 				}
 			case err := <-watcher.Errors:
 				log.Println("error:", err)
@@ -41,4 +54,23 @@ func StartWatching(path string) {
 	}()
 
 	<-done
+}
+
+func isDir(filePath string) bool {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return false
+	}
+
+	fi, err := file.Stat()
+	if err != nil {
+		return false
+	}
+
+	switch mode := fi.Mode(); {
+	case mode.IsDir():
+		return true
+	default:
+		return false
+	}
 }

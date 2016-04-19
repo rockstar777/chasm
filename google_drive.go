@@ -168,6 +168,32 @@ func (g GDriveStore) Description() string {
 	return label
 }
 
+// Clean deletes all shares from the folder store
+func (g GDriveStore) Clean() {
+	color.Yellow("Cleaning google drive:")
+
+	ctx := context.Background()
+	config := &g.Config
+	client := config.Client(ctx, &g.OAuthToken)
+
+	svc, err := drive.New(client)
+	if err != nil {
+		color.Red("Unable to retrieve drive Client %v", err)
+		return
+	}
+
+	r, err := svc.Files.List().Spaces("appDataFolder").Do()
+	if err != nil {
+		color.Red("Unable to search for files to delete: %v", err)
+		return
+	}
+
+	for _, i := range r.Files {
+		fmt.Println("\t- remove ", i.Name)
+		svc.Files.Delete(i.Id).Do()
+	}
+}
+
 /// MARK: Helper Methods ///
 func getConfig() (*oauth2.Config, error) {
 	b, err := ioutil.ReadFile("client/gdrive_client_secret.json")
