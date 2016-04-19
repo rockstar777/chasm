@@ -35,7 +35,7 @@ func (f FolderStore) Upload(share Share) {
 
 // Delete deletes the share by its shareID
 func (f FolderStore) Delete(sid ShareID) {
-	sharePath := f.Path + string(sid)
+	sharePath := f.Path + "/" + string(sid)
 	if _, err := os.Stat(sharePath); err != nil {
 		color.Red("Share %s does not exist.", sharePath)
 		return

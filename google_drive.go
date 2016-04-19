@@ -3,18 +3,14 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
-
 	"github.com/fatih/color"
-
 	"github.com/toqueteos/webbrowser"
-
-	"time"
-
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
+	"io/ioutil"
+	"time"
 )
 
 type GDriveStore struct {
@@ -31,7 +27,7 @@ func (g *GDriveStore) Setup() bool {
 		return false
 	}
 
-	tok, err := getTokenFromWeb(config)
+	tok, err := getGDriveTokenFromWeb(config)
 	if err != nil {
 		color.Red("Unable to get client token: %v", err)
 		return false
@@ -68,6 +64,7 @@ func (g GDriveStore) Upload(share Share) {
 	svc.Files.Create(&file).Media(bytes.NewReader(share.Data)).Do()
 
 }
+
 func (g GDriveStore) Delete(sid ShareID) {
 	ctx := context.Background()
 	config := &g.Config
@@ -129,7 +126,7 @@ func getConfig() (*oauth2.Config, error) {
 
 // getTokenFromWeb uses Config to request a Token.
 // It returns the retrieved Token.
-func getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
+func getGDriveTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 	webbrowser.Open(authURL)
 

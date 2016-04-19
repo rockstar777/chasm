@@ -4,12 +4,11 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/fatih/color"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
-
-	"github.com/fatih/color"
 )
 
 /// Chasm Types ///
@@ -36,13 +35,16 @@ type ChasmPref struct {
 	// the cloud services sharing across
 	GDriveStores []GDriveStore `json:"gdrive_stores"`
 
+	// the cloud services sharing across
+	DropboxStores []DropboxStore `json:"dropbox_stores"`
+
 	// maps files to their shareId
 	FileMap map[string]ShareID `json:"files"`
 }
 
 // RegisteredServices counts all services
 func (p ChasmPref) RegisteredServices() int {
-	return len(p.FolderStores) + len(p.GDriveStores)
+	return len(p.FolderStores) + len(p.GDriveStores) + len(p.DropboxStores)
 }
 
 // NeedSetup checks if there are enough services to run
@@ -65,6 +67,11 @@ func (p ChasmPref) AllCloudStores() []CloudStore {
 
 	for j, gds := range p.GDriveStores {
 		cloudStores[j+ind] = CloudStore(gds)
+		ind += 1
+	}
+
+	for k, dbs := range p.DropboxStores {
+		cloudStores[k+ind] = CloudStore(dbs)
 		ind += 1
 	}
 

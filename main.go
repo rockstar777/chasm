@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/codegangsta/cli"
+	"github.com/fatih/color"
 	"os"
 	"os/user"
 	"path"
-
-	"github.com/codegangsta/cli"
-	"github.com/fatih/color"
 )
 
 /// chasm commands ///
@@ -71,14 +70,8 @@ func addFolder(c *cli.Context) {
 	color.Green("Success! Added folder store: %s", folderStore.Path)
 }
 
-func addDropbox(c *cli.Context) {
-	loadChasm(c)
-	color.Red("Error: not implemented.")
-}
-
 func addDrive(c *cli.Context) {
 	loadChasm(c)
-
 	var gdrive GDriveStore
 
 	if (&gdrive).Setup() == false {
@@ -89,6 +82,23 @@ func addDrive(c *cli.Context) {
 	preferences.Save()
 
 	color.Green("Success! Added Google Drive Store.")
+}
+
+func addDropbox(c *cli.Context) {
+	loadChasm(c)
+
+	var dropbox DropboxStore
+
+	if (&dropbox).Setup() == false {
+		color.Red("(Cloud Store) Dropbox: setup incomplete.")
+		return
+	}
+
+	preferences.DropboxStores = append(preferences.DropboxStores, dropbox)
+	preferences.Save()
+	fmt.Println("hello!", preferences)
+
+	color.Green("Success! Added Dropbox Store.")
 }
 
 /// Cli toolchain ///
