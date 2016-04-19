@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/codegangsta/cli"
-	"github.com/fatih/color"
 	"os"
 	"os/user"
 	"path"
+
+	"github.com/codegangsta/cli"
+	"github.com/fatih/color"
 )
 
 /// chasm commands ///
@@ -103,9 +104,9 @@ func addDropbox(c *cli.Context) {
 		return
 	}
 
-	preferences.DropboxStores = append(preferences.DropboxStores, dropbox)
+	// only 1 dropbox store
+	preferences.DropboxStores = []DropboxStore{dropbox}
 	preferences.Save()
-	fmt.Println("hello!", preferences)
 
 	color.Green("Success! Added Dropbox Store.")
 }

@@ -1,5 +1,5 @@
 {
-	"ImportPath": "chasm.com/chasm",
+	"ImportPath": "github.com/agrinman/chasm",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v62",
 	"Deps": [

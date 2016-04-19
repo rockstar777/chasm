@@ -3,15 +3,16 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
+	"path"
+	"time"
+
 	"github.com/fatih/color"
 	"github.com/toqueteos/webbrowser"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
-	"io/ioutil"
-	"path"
-	"time"
 )
 
 type GDriveStore struct {
@@ -193,13 +194,8 @@ func (g GDriveStore) Clean() {
 
 /// MARK: Helper Methods ///
 func getConfig() (*oauth2.Config, error) {
-	b, err := ioutil.ReadFile("client/gdrive_client_secret.json")
-	if err != nil {
-		color.Red("Unable to get client id for chasm %v", err)
-		return nil, err
-	}
-
-	return google.ConfigFromJSON(b, drive.DriveAppdataScope)
+	clientJSON := []byte(GoogleDriveClientSecret)
+	return google.ConfigFromJSON(clientJSON, drive.DriveAppdataScope)
 }
 
 // getTokenFromWeb uses Config to request a Token.

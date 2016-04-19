@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
+
 	"github.com/fatih/color"
 	"github.com/stacktic/dropbox"
 	"github.com/toqueteos/webbrowser"
-	"io/ioutil"
-	"path/filepath"
 )
 
 type DropboxStore struct {
@@ -22,13 +23,9 @@ type ClientKey struct {
 }
 
 func GetClientKeys() (key, secret string) {
-	file, err := ioutil.ReadFile("client/dropbox_secret.json")
-	if err != nil {
-		fmt.Printf("File error: %v\n", err)
-		return
-	}
+	clientSecret := []byte(DropboxClientSecret)
 	var keys ClientKey
-	json.Unmarshal(file, &keys)
+	json.Unmarshal(clientSecret, &keys)
 	return keys.Key, keys.Secret
 }
 
@@ -49,12 +46,10 @@ func (d *DropboxStore) Setup() bool {
 		color.Red("Unable to get client token: %v", err)
 		return false
 	}
-	fmt.Println(tok, db.AccessToken())
 
 	// set the oauth info
 	d.Dropbox = *db
 	d.AccessToken = db.AccessToken()
-	fmt.Println("dropbox:", d)
 
 	return true
 }
@@ -108,6 +103,8 @@ func (d DropboxStore) Description() string {
 }
 
 func (d DropboxStore) Clean() {
+	color.Yellow("Cleaning dropbox:")
+
 	key, secret := GetClientKeys()
 	d.Dropbox.SetAppInfo(key, secret)
 	d.Dropbox.SetAccessToken(d.AccessToken)
@@ -120,6 +117,7 @@ func (d DropboxStore) Clean() {
 
 	for _, i := range entry.Contents {
 		name := filepath.Base(i.Path)
+		fmt.Println("\t- remove ", name)
 		d.Dropbox.Delete(name)
 	}
 
