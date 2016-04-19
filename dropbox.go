@@ -49,27 +49,34 @@ func (d DropboxStore) Upload(share Share) {
 	key, secret := GetClientKeys()
 	d.Dropbox.SetAppInfo(key, secret)
 	d.Dropbox.SetAccessToken(d.AccessToken)
-	fmt.Printf("Uploading %s to Dropbox...\n", share.SID)
+
+	fmt.Print(color.MagentaString("Uploading Dropbox/%s...", share.SID))
+
 	input := ioutil.NopCloser(bytes.NewReader(share.Data))
 	_, err := d.Dropbox.FilesPut(input, int64(len(share.Data)), string(share.SID), true, "")
 	if err != nil {
 		color.Red("Error uploading file: ", err)
 		return
 	}
-	fmt.Printf("Uploaded %s to Dropbox!\n", share.SID)
+	//print check mark
+	fmt.Print(color.MagentaString("\u2713\n"))
 }
 
 func (d DropboxStore) Delete(sid ShareID) {
 	key, secret := GetClientKeys()
 	d.Dropbox.SetAppInfo(key, secret)
 	d.Dropbox.SetAccessToken(d.AccessToken)
-	fmt.Printf("Deleting %s from Dropbox...\n", sid)
+
+	fmt.Print(color.YellowString("Deleting Dropbox/%s...", sid))
+
 	_, err := d.Dropbox.Delete(string(sid))
 	if err != nil {
 		color.Red("Error deleting file: ", err)
 		return
 	}
-	fmt.Printf("Deleted %s from Dropbox!\n", sid)
+
+	//print check mark
+	fmt.Print(color.GreenString("\u2713\n"))
 }
 
 func (d DropboxStore) Description() string {

@@ -53,6 +53,8 @@ func (g GDriveStore) Upload(share Share) {
 		return
 	}
 
+	fmt.Print(color.MagentaString("Uploading GoogleDrive/%s...", share.SID))
+
 	// delete existing share
 	deleteFilesForShareID(share.SID, svc)
 
@@ -67,7 +69,8 @@ func (g GDriveStore) Upload(share Share) {
 	if err != nil {
 		color.Red("GoogleDrive/%s upload failed: %v", share.SID, err)
 	} else {
-		color.Green("Share GoogleDrive/%s saved successfully!", share.SID)
+		//print check mark
+		fmt.Print(color.MagentaString("\u2713\n"))
 	}
 }
 
@@ -82,8 +85,12 @@ func (g GDriveStore) Delete(sid ShareID) {
 		return
 	}
 
+	fmt.Print(color.YellowString("Deleting GoogleDrive/%s...", sid))
 	// delete existing share
 	deleteFilesForShareID(sid, svc)
+
+	//print check mark
+	fmt.Print(color.YellowString("\u2713\n"))
 }
 
 //Restore downloads shares to local restore path
