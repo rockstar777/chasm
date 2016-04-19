@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/fatih/color"
 )
 
 /// Chasm Types ///
@@ -232,7 +233,7 @@ func DeleteFile(filePath string) {
 		delete(preferences.FileMap, filePath)
 		preferences.Save()
 
-		color.Green("Deleted share from all cloud stores.")
+		color.Yellow("Deleted share from all cloud stores.")
 		return
 	}
 
