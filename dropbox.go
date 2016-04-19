@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
+
 	"github.com/fatih/color"
 	"github.com/stacktic/dropbox"
 	"github.com/toqueteos/webbrowser"
-	"io/ioutil"
-	"path/filepath"
 )
 
 type DropboxStore struct {
