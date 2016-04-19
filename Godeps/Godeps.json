@@ -1,7 +1,6 @@
 {
 	"ImportPath": "github.com/agrinman/chasm",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v60",
 	"Deps": [
 		{
 			"ImportPath": "github.com/codegangsta/cli",
@@ -22,8 +21,37 @@
 			"Rev": "56b76bdf51f7708750eac80fa38b952bb9f32639"
 		},
 		{
-			"ImportPath": "golang.org/x/sys/unix",
-			"Rev": "7a56174f0086b32866ebd746a794417edbc678a1"
+			"ImportPath": "github.com/toqueteos/webbrowser",
+			"Comment": "v1.0",
+			"Rev": "21fc9f95c83442fd164094666f7cb4f9fdd56cd6"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "fb93926129b8ec0056f2f458b1f519654814edf0"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "7e9cd5d59563851383f8f81a7fbb01213709387c"
+		},
+		{
+			"ImportPath": "google.golang.org/api/drive/v3",
+			"Rev": "9737cc9e103c00d06a8f3993361dec083df3d252"
+		},
+		{
+			"ImportPath": "google.golang.org/api/gensupport",
+			"Rev": "9737cc9e103c00d06a8f3993361dec083df3d252"
+		},
+		{
+			"ImportPath": "google.golang.org/api/googleapi",
+			"Rev": "9737cc9e103c00d06a8f3993361dec083df3d252"
+		},
+		{
+			"ImportPath": "google.golang.org/cloud/compute/metadata",
+			"Rev": "bee6e2e3a93d0c3fd2873b127cf447f39ea655b8"
+		},
+		{
+			"ImportPath": "google.golang.org/cloud/internal",
+			"Rev": "bee6e2e3a93d0c3fd2873b127cf447f39ea655b8"
 		},
 		{
 			"ImportPath": "gopkg.in/fsnotify.v1",
