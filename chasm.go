@@ -110,9 +110,11 @@ func IsValidPath(filePath string) bool {
 	if err != nil {
 		return true
 	}
+
 	scanner := bufio.NewScanner(chasmIgnore)
 	for scanner.Scan() {
 		pattern := scanner.Text()
+		// if the file matches anything in .chasmignore, return false
 		ok, err := filepath.Match(pattern, base)
 		if ok {
 			return false
@@ -126,6 +128,7 @@ func IsValidPath(filePath string) bool {
 	if err := scanner.Err(); err != nil {
 		fmt.Println(err)
 	}
+
 	return true
 }
 
