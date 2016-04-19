@@ -49,6 +49,9 @@ func StartWatching(path string) {
 				}
 				if event.Op&fsnotify.Remove == fsnotify.Remove {
 					DeleteFile(event.Name)
+					if isDir {
+						watcher.Remove(event.Name)
+					}
 				}
 			case err := <-watcher.Errors:
 				log.Println("error:", err)

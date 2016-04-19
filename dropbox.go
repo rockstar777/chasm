@@ -50,12 +50,10 @@ func (d *DropboxStore) Setup() bool {
 		color.Red("Unable to get client token: %v", err)
 		return false
 	}
-	fmt.Println(tok, db.AccessToken())
 
 	// set the oauth info
 	d.Dropbox = *db
 	d.AccessToken = db.AccessToken()
-	fmt.Println("dropbox:", d)
 
 	return true
 }
@@ -109,6 +107,8 @@ func (d DropboxStore) Description() string {
 }
 
 func (d DropboxStore) Clean() {
+	color.Yellow("Cleaning dropbox:")
+
 	key, secret := GetClientKeys()
 	d.Dropbox.SetAppInfo(key, secret)
 	d.Dropbox.SetAccessToken(d.AccessToken)
@@ -121,6 +121,7 @@ func (d DropboxStore) Clean() {
 
 	for _, i := range entry.Contents {
 		name := filepath.Base(i.Path)
+		fmt.Println("\t- remove ", name)
 		d.Dropbox.Delete(name)
 	}
 
