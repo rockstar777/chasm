@@ -23,13 +23,9 @@ type ClientKey struct {
 }
 
 func GetClientKeys() (key, secret string) {
-	file, err := ioutil.ReadFile("client/dropbox_secret.json")
-	if err != nil {
-		fmt.Printf("File error: %v\n", err)
-		return
-	}
+	clientSecret := []byte(DropboxClientSecret)
 	var keys ClientKey
-	json.Unmarshal(file, &keys)
+	json.Unmarshal(clientSecret, &keys)
 	return keys.Key, keys.Secret
 }
 
