@@ -17,15 +17,17 @@ USAGE:
    chasm [global options] command [command options] [arguments...]
 
 VERSION:
-   0.0.1
-
+   0.1
+   
 COMMANDS:
-   start	Start running chasm. start --root=<chasm_root>.
-   add, a	Add a new cloud store to chasm. --root=<chasm_root> add <service>
+   start	Start running chasm.
+   status	Prints out the current Chasm setup.
+   add, a	Add a new cloud store to chasm.
+   restore	Restores chasm after repeating setup.
    help, h	Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --root 			Chasm root directory. Example: --root=/home/alex
+   --root "/Users/Alex/Chasm"	Destination of the Chasm secure folder.
    --help, -h			show help
    --generate-bash-completion
    --version, -v		print the version

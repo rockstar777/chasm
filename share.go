@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 )
+
 // ShareID is a uniqiue id to represent uploaded shares
 type ShareID string
 
@@ -36,10 +37,13 @@ func CreateShares(secret []byte, sid ShareID, n int) []Share {
 	}
 }
 
-
 // CombineShares restores the secret by adding
-func CombineShares(shares []Share) {
+func CombineShares(shares []Share) []byte {
+	if len(shares) > 2 {
+		panic("n > 2. unsupported for now.")
+	}
 
+	return xor(shares[0].Data, shares[1].Data)
 }
 
 /// Helper Functions ///
@@ -52,8 +56,8 @@ func xor(a, b []byte) []byte {
 
 	res := make([]byte, n)
 
-	for i:= 0; i < len(a); i++ {
-		res[i] = a[i]^b[i]
+	for i := 0; i < len(a); i++ {
+		res[i] = a[i] ^ b[i]
 	}
 
 	return res

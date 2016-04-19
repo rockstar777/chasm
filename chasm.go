@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/fatih/color"
 )
 
 /// Chasm Types ///
@@ -16,10 +17,11 @@ import (
 // CloudStore represents an external cloud storage service that is compatible
 // with Chasm
 type CloudStore interface {
-	Setup()
-
 	Upload(share Share)
 	Delete(sid ShareID)
+
+	//Restore downloads shares to local restore path
+	Restore() string
 
 	Description() string
 }
@@ -29,7 +31,10 @@ type ChasmPref struct {
 	root string
 
 	// the cloud services sharing across
-	FolderStores []FolderStore `json:"svcs"`
+	FolderStores []FolderStore `json:"folder_stores"`
+
+	// the cloud services sharing across
+	GDriveStores []GDriveStore `json:"gdrive_stores"`
 
 	// maps files to their shareId
 	FileMap map[string]ShareID `json:"files"`
@@ -37,7 +42,7 @@ type ChasmPref struct {
 
 // RegisteredServices counts all services
 func (p ChasmPref) RegisteredServices() int {
-	return len(p.FolderStores)
+	return len(p.FolderStores) + len(p.GDriveStores)
 }
 
 // NeedSetup checks if there are enough services to run
@@ -49,11 +54,18 @@ func (p ChasmPref) NeedSetup() bool {
 func (p ChasmPref) AllCloudStores() []CloudStore {
 
 	// adjust length for new store types
-	cloudStores := make([]CloudStore, len(p.FolderStores))
+	cloudStores := make([]CloudStore, p.RegisteredServices())
 
 	// all other cloud stores go here
+	ind := 0
 	for i, fs := range p.FolderStores {
 		cloudStores[i] = CloudStore(fs)
+		ind += 1
+	}
+
+	for j, gds := range p.GDriveStores {
+		cloudStores[j+ind] = CloudStore(gds)
+		ind += 1
 	}
 
 	return cloudStores
@@ -62,7 +74,7 @@ func (p ChasmPref) AllCloudStores() []CloudStore {
 // Save saves the chasm preferences
 func (p ChasmPref) Save() {
 	chasmFilePath := p.root + string(filepath.Separator) + chasmPrefFile
-	chasmFileBytes, err := json.Marshal(preferences)
+	chasmFileBytes, err := json.MarshalIndent(preferences, "", "    ")
 	check(err)
 
 	ioutil.WriteFile(chasmFilePath, chasmFileBytes, 0660)
@@ -92,9 +104,14 @@ func CreateOrLoadChasmDir(root string) {
 	}
 
 	chasmIgnorePath := path.Join(root, chasmIgnoreFile)
-	if _, err := os.Stat(chasmIgnorePath); os.IsNotExist(err) {
-		preferences.FileMap[chasmIgnorePath] = ShareID(chasmIgnorePath)
-		os.Create(chasmIgnorePath)
+	_, err = ioutil.ReadFile(chasmIgnorePath)
+	if err != nil {
+		preferences.FileMap[chasmIgnorePath] = ShareID(chasmIgnoreFile)
+		// add *.DS_Store to ignore file by default
+		errWrite := ioutil.WriteFile(chasmIgnorePath, []byte(".DS_Store\n"), 0777)
+		if errWrite != nil {
+			color.Red("Error: could not write to %s: %s", chasmFilePath, errWrite)
+		}
 	}
 
 	preferences.root = root
@@ -195,4 +212,54 @@ func DeleteFile(filePath string) {
 	}
 
 	color.Red("Path %s is not tracked. Cannot find share id.", filePath)
+}
+
+// Restore shares to the original files
+func Restore() {
+	allCloudStores := preferences.AllCloudStores()
+	sharePaths := make([]string, len(allCloudStores))
+
+	// (1) first get all shares
+	for i, cs := range allCloudStores {
+		sharePaths[i] = cs.Restore()
+	}
+
+	// (2) next restore .chasm file
+	chasmFileBytes := restoreShareID(ShareID(chasmPrefFile), sharePaths)
+
+	var restoredPrefs ChasmPref
+	err := json.Unmarshal(chasmFileBytes, &restoredPrefs)
+	if err != nil {
+		color.Red("Cannot restore chasm preferecnes file from cloud services.")
+		return
+	}
+
+	// (3) finally, for the remaining files, restore and save
+	for filePath, sid := range restoredPrefs.FileMap {
+		fileBytes := restoreShareID(sid, sharePaths)
+		err := ioutil.WriteFile(filePath, fileBytes, 0770)
+		if err != nil {
+			color.Red("Error writing restored file %s: %s", filePath, err)
+			return
+		}
+	}
+	color.Green("Done. Restored all files!")
+}
+
+func restoreShareID(sid ShareID, sharePaths []string) []byte {
+	fileShares := make([]Share, len(sharePaths))
+
+	for i, sp := range sharePaths {
+		file := path.Join(sp, string(sid))
+		dataBytes, err := ioutil.ReadFile(file)
+		if err != nil {
+			color.Red("(Skipping share) Cannot read file %s: %s", file, err)
+			continue
+		}
+
+		share := Share{SID: sid, Data: dataBytes}
+		fileShares[i] = share
+	}
+
+	return CombineShares(fileShares)
 }

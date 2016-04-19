@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/user"
 	"path"
@@ -31,13 +32,26 @@ func startChasm(c *cli.Context) {
 func statusChasm(c *cli.Context) {
 	loadChasm(c)
 
-	color.Green("Chasm root: %s", chasmRoot)
-	for _, cs := range preferences.AllCloudStores() {
-		color.Cyan(cs.Description())
+	color.Green("Cloud stores:")
+	for i, cs := range preferences.AllCloudStores() {
+		fmt.Println(color.GreenString("%v)", i+1), cs.Description())
 	}
 	if preferences.NeedSetup() {
 		color.Red("Warning: not enough services.")
 	}
+}
+
+func restoreChasm(c *cli.Context) {
+	loadChasm(c)
+
+	if preferences.NeedSetup() {
+		color.Red("Warning: not enough services. Cannot Restore.")
+		return
+	}
+
+	// start the watcher
+	color.Green("Preparing to restore chasm to %s", preferences.root)
+	Restore()
 }
 
 func addFolder(c *cli.Context) {
@@ -64,7 +78,17 @@ func addDropbox(c *cli.Context) {
 
 func addDrive(c *cli.Context) {
 	loadChasm(c)
-	color.Red("Error: not implemented.")
+
+	var gdrive GDriveStore
+
+	if (&gdrive).Setup() == false {
+		color.Red("(Cloud Store) Google Drive: setup incomplete.")
+		return
+	}
+	preferences.GDriveStores = append(preferences.GDriveStores, gdrive)
+	preferences.Save()
+
+	color.Green("Success! Added Google Drive Store.")
 }
 
 /// Cli toolchain ///
@@ -125,6 +149,12 @@ func main() {
 					Action: addDrive,
 				},
 			},
+		},
+		{
+			Name:    "restore",
+			Aliases: nil,
+			Usage:   "Restores chasm after repeating setup.",
+			Action:  restoreChasm,
 		},
 	}
 
