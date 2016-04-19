@@ -18,7 +18,7 @@ USAGE:
 
 VERSION:
    0.1
-   
+
 COMMANDS:
    start	Start running chasm.
    status	Prints out the current Chasm setup.
@@ -27,7 +27,7 @@ COMMANDS:
    help, h	Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --root "/Users/Alex/Chasm"	Destination of the Chasm secure folder.
+   --root "$HOME/Chasm"	Destination of the Chasm secure folder.
    --help, -h			show help
    --generate-bash-completion
    --version, -v		print the version

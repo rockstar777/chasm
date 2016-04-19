@@ -69,3 +69,13 @@ func (f FolderStore) Description() string {
 
 	return label
 }
+
+// Clean deletes all shares from the folder store
+func (f FolderStore) Clean() {
+	color.Yellow("Cleaning folder store:")
+	files, _ := ioutil.ReadDir(f.Path)
+	for _, file := range files {
+		fmt.Println("\t- remove ", file.Name())
+		os.Remove(path.Join(f.Path, file.Name()))
+	}
+}

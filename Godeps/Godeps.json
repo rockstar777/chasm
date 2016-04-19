@@ -1,7 +1,8 @@
 {
 	"ImportPath": "chasm.com/chasm",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v62",
+ 	"GodepVersion": "v62",
+ 
 	"Deps": [
 		{
 			"ImportPath": "github.com/codegangsta/cli",
@@ -64,7 +65,26 @@
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",
-			"Rev": "7a56174f0086b32866ebd746a794417edbc678a1"
+			"Rev": "7a56174f0086b32866ebd746a794417edbc678a1",
+
+			"ImportPath": "google.golang.org/api/drive/v3",
+			"Rev": "9737cc9e103c00d06a8f3993361dec083df3d252"
+		},
+		{
+			"ImportPath": "google.golang.org/api/gensupport",
+			"Rev": "9737cc9e103c00d06a8f3993361dec083df3d252"
+		},
+		{
+			"ImportPath": "google.golang.org/api/googleapi",
+			"Rev": "9737cc9e103c00d06a8f3993361dec083df3d252"
+		},
+		{
+			"ImportPath": "google.golang.org/cloud/compute/metadata",
+			"Rev": "bee6e2e3a93d0c3fd2873b127cf447f39ea655b8"
+		},
+		{
+			"ImportPath": "google.golang.org/cloud/internal",
+			"Rev": "bee6e2e3a93d0c3fd2873b127cf447f39ea655b8"
 		},
 		{
 			"ImportPath": "google.golang.org/api/drive/v3",

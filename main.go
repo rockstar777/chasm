@@ -48,9 +48,16 @@ func restoreChasm(c *cli.Context) {
 		return
 	}
 
-	// start the watcher
 	color.Green("Preparing to restore chasm to %s", preferences.root)
 	Restore()
+}
+
+func cleanChasm(c *cli.Context) {
+	loadChasm(c)
+
+	for _, cs := range preferences.AllCloudStores() {
+		cs.Clean()
+	}
 }
 
 func addFolder(c *cli.Context) {
@@ -78,7 +85,9 @@ func addDrive(c *cli.Context) {
 		color.Red("(Cloud Store) Google Drive: setup incomplete.")
 		return
 	}
-	preferences.GDriveStores = append(preferences.GDriveStores, gdrive)
+
+	// only 1 gdrive store
+	preferences.GDriveStores = []GDriveStore{gdrive}
 	preferences.Save()
 
 	color.Green("Success! Added Google Drive Store.")
@@ -165,6 +174,12 @@ func main() {
 			Aliases: nil,
 			Usage:   "Restores chasm after repeating setup.",
 			Action:  restoreChasm,
+		},
+		{
+			Name:    "clean",
+			Aliases: nil,
+			Usage:   "Deletes all shares in cloud stores",
+			Action:  cleanChasm,
 		},
 	}
 
