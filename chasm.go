@@ -153,6 +153,22 @@ func AddFile(filePath string) {
 		color.Red("Path %s is in .chasmignore. No actions will be performed.", filePath)
 		return
 	}
+	file, _ := os.Open(filePath)
+	fi, err := file.Stat()
+	if err != nil {
+		color.Red("Cannot get file info: %s", err)
+		return
+	}
+	switch mode := fi.Mode(); {
+	case mode.IsDir():
+		files, _ := ioutil.ReadDir(filePath)
+		for _, f := range files {
+			AddFile(path.Join(filePath, f.Name()))
+		}
+		return
+	case mode.IsRegular():
+		break
+	}
 
 	var sid ShareID
 	if existingSID, ok := preferences.FileMap[filePath]; ok {
@@ -239,6 +255,7 @@ func Restore() {
 	// (3) finally, for the remaining files, restore and save
 	for filePath, sid := range restoredPrefs.FileMap {
 		fileBytes := restoreShareID(sid, sharePaths)
+		os.MkdirAll(path.Dir(filePath), 0770)
 		err := ioutil.WriteFile(filePath, fileBytes, 0770)
 		if err != nil {
 			color.Red("Error writing restored file %s: %s", filePath, err)
