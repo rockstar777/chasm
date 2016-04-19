@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/stacktic/dropbox"
@@ -15,10 +16,27 @@ type DropboxStore struct {
 	AccessToken string
 }
 
+type ClientKey struct {
+	Key    string
+	Secret string
+}
+
+func GetClientKeys() (key, secret string) {
+	file, err := ioutil.ReadFile("client/dropbox_secret.json")
+	if err != nil {
+		fmt.Printf("File error: %v\n", err)
+		return
+	}
+	var keys ClientKey
+	json.Unmarshal(file, &keys)
+	return keys.Key, keys.Secret
+}
+
 func (d *DropboxStore) Setup() bool {
 	// config, err := getConfig()
 	db := dropbox.NewDropbox()
-	db.SetAppInfo("zpy424sdnluk9c1", "rrmjsz7mlgnholq")
+	key, secret := GetClientKeys()
+	db.SetAppInfo(key, secret)
 
 	tok, err := getDropboxTokenFromWeb()
 	if err != nil {
@@ -41,24 +59,9 @@ func (d *DropboxStore) Setup() bool {
 	return true
 }
 
-type ClientKey struct {
-	Key    string
-	Secret string
-}
-
-func (d DropboxStore) GetClientKeys() (key, secret string) {
-	file, err := ioutil.ReadFile("client/dropbox_secret.json")
-	if err != nil {
-		fmt.Printf("File error: %v\n", err)
-		return
-	}
-	var keys ClientKey
-	json.Unmarshal(file, &keys)
-	return keys.Key, keys.Secret
-}
-
 func (d DropboxStore) Upload(share Share) {
-	d.Dropbox.SetAppInfo("zpy424sdnluk9c1", "rrmjsz7mlgnholq")
+	key, secret := GetClientKeys()
+	d.Dropbox.SetAppInfo(key, secret)
 	d.Dropbox.SetAccessToken(d.AccessToken)
 	fmt.Printf("Uploading %s to Dropbox...\n", share.SID)
 	input := ioutil.NopCloser(bytes.NewReader(share.Data))
@@ -71,7 +74,8 @@ func (d DropboxStore) Upload(share Share) {
 }
 
 func (d DropboxStore) Delete(sid ShareID) {
-	d.Dropbox.SetAppInfo("zpy424sdnluk9c1", "rrmjsz7mlgnholq")
+	key, secret := GetClientKeys()
+	d.Dropbox.SetAppInfo(key, secret)
 	d.Dropbox.SetAccessToken(d.AccessToken)
 	fmt.Printf("Deleting %s from Dropbox...\n", sid)
 	_, err := d.Dropbox.Delete(string(sid))
@@ -85,7 +89,8 @@ func (d DropboxStore) Delete(sid ShareID) {
 func (d DropboxStore) Description() string {
 	label := "Dropbox Store"
 
-	d.Dropbox.SetAppInfo("zpy424sdnluk9c1", "rrmjsz7mlgnholq")
+	key, secret := GetClientKeys()
+	d.Dropbox.SetAppInfo(key, secret)
 	d.Dropbox.SetAccessToken(d.AccessToken)
 
 	// get all chasm files from drive
@@ -102,13 +107,62 @@ func (d DropboxStore) Description() string {
 	return label
 }
 
+func (d DropboxStore) Clean() {
+	key, secret := GetClientKeys()
+	d.Dropbox.SetAppInfo(key, secret)
+	d.Dropbox.SetAccessToken(d.AccessToken)
+
+	entry, err := d.Dropbox.Metadata("", true, false, "", "", 0)
+	if err != nil {
+		color.Red("Unable to iterate names %v", err)
+		return
+	}
+
+	for _, i := range entry.Contents {
+		name := filepath.Base(i.Path)
+		d.Dropbox.Delete(name)
+	}
+
+	return
+}
+
 func (d DropboxStore) Restore() string {
-	color.Red("not implemented")
-	return ""
+	key, secret := GetClientKeys()
+	d.Dropbox.SetAppInfo(key, secret)
+	d.Dropbox.SetAccessToken(d.AccessToken)
+
+	restoreDir, err := ioutil.TempDir("", "chasm_dropbox_restore")
+	if err != nil {
+		color.Red("Error cannot create temp dir: %v", err)
+		return ""
+	}
+
+	entry, err := d.Dropbox.Metadata("", true, false, "", "", 0)
+	if err != nil {
+		color.Red("Unable to iterate names %v", err)
+		return ""
+	}
+
+	color.Yellow("Downloading shares from Dropbox...")
+
+	for _, i := range entry.Contents {
+		if !i.IsDir {
+			name := filepath.Base(i.Path)
+			err := d.Dropbox.DownloadToFile(name, filepath.Join(restoreDir, name), "")
+			if err != nil {
+				color.Red("Unable to download file %s: %v", name, err)
+				return ""
+			}
+			fmt.Println("\t - got share ", name)
+		}
+	}
+
+	return restoreDir
 }
 
 func getDropboxTokenFromWeb() (string, error) {
-	authURL := fmt.Sprintf("https://www.dropbox.com/1/oauth2/authorize?client_id=%s&response_type=code", "zpy424sdnluk9c1")
+	key, _ := GetClientKeys()
+	authURL := fmt.Sprintf("https://www.dropbox.com/1/oauth2/authorize?client_id=%s&response_type=code", key)
 	webbrowser.Open(authURL)
 
 	color.Yellow("Enter Auth Code: ")

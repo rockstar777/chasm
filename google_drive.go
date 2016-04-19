@@ -3,12 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-<<<<<<< HEAD
-=======
-	"io/ioutil"
-	"path"
-
->>>>>>> d2dda8b884cc4ab151c80eea8fce611502168c3c
 	"github.com/fatih/color"
 	"github.com/toqueteos/webbrowser"
 	"golang.org/x/net/context"
@@ -16,6 +10,7 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
 	"io/ioutil"
+	"path"
 	"time"
 )
 
