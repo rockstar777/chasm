@@ -218,7 +218,12 @@ func Restore() {
 
 	// (1) first get all shares
 	for i, cs := range allCloudStores {
-		sharePaths[i] = cs.Restore()
+		sp := cs.Restore()
+		if sp == "" {
+			color.Red("Restore failed for %v", cs)
+			return
+		}
+		sharePaths[i] = sp
 	}
 
 	// (2) next restore .chasm file

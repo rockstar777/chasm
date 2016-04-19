@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"path"
 
 	"github.com/fatih/color"
 
@@ -58,15 +59,19 @@ func (g GDriveStore) Upload(share Share) {
 	// delete existing share
 	deleteFilesForShareID(share.SID, svc)
 
+	// now create and upload share
 	file := drive.File{}
 	now, err := time.Now().MarshalText()
 	file.ModifiedTime = string(now)
 	file.Name = string(share.SID)
 	file.Parents = []string{"appDataFolder"}
 
-	fmt.Println("Uploading: ", file)
-	svc.Files.Create(&file).Media(bytes.NewReader(share.Data)).Do()
-
+	_, err = svc.Files.Create(&file).Media(bytes.NewReader(share.Data)).Do()
+	if err != nil {
+		color.Red("GoogleDrive/%s upload failed: %v", share.SID, err)
+	} else {
+		color.Green("Share GoogleDrive/%s saved successfully!", share.SID)
+	}
 }
 func (g GDriveStore) Delete(sid ShareID) {
 	ctx := context.Background()
@@ -85,8 +90,55 @@ func (g GDriveStore) Delete(sid ShareID) {
 
 //Restore downloads shares to local restore path
 func (g GDriveStore) Restore() string {
-	color.Red("Warning: Google Drive Store Unimplemented.")
-	return ""
+	ctx := context.Background()
+	config := &g.Config
+	client := config.Client(ctx, &g.OAuthToken)
+
+	svc, err := drive.New(client)
+	if err != nil {
+		color.Red("Unable to retrieve drive Client %v", err)
+		return ""
+	}
+
+	restoreDir, err := ioutil.TempDir("", "chasm_gdrive_restore")
+	if err != nil {
+		color.Red("Error cannot create temp dir: %v", err)
+		return ""
+	}
+
+	// download all files
+	// get all chasm files from drive
+	r, err := svc.Files.List().Spaces("appDataFolder").Do()
+	if err != nil {
+		color.Red("Unable to iterate names %v", err)
+		return ""
+	}
+
+	color.Yellow("Downloading shares from Google Drive...")
+
+	for _, i := range r.Files {
+
+		// export file
+		resp, err := svc.Files.Get(i.Id).Download()
+		if err != nil {
+			color.Yellow("Error downloading file %s: %v", i.Name, err)
+			continue
+		}
+		defer resp.Body.Close()
+
+		// read file bytes
+		fileBytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			color.Yellow("Error reading downloaded bytes %s: %v", i.Name, err)
+			continue
+		}
+
+		// write file to temp dir
+		ioutil.WriteFile(path.Join(restoreDir, i.Name), fileBytes, 0770)
+		fmt.Println("\t - got share ", i.Name)
+	}
+
+	return restoreDir
 }
 
 func (g GDriveStore) Description() string {
