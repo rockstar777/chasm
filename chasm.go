@@ -17,8 +17,6 @@ import (
 // CloudStore represents an external cloud storage service that is compatible
 // with Chasm
 type CloudStore interface {
-	Setup()
-
 	Upload(share Share)
 	Delete(sid ShareID)
 
@@ -33,7 +31,10 @@ type ChasmPref struct {
 	root string
 
 	// the cloud services sharing across
-	FolderStores []FolderStore `json:"svcs"`
+	FolderStores []FolderStore `json:"folder_stores"`
+
+	// the cloud services sharing across
+	GDriveStores []GDriveStore `json:"gdrive_stores"`
 
 	// maps files to their shareId
 	FileMap map[string]ShareID `json:"files"`
@@ -41,7 +42,7 @@ type ChasmPref struct {
 
 // RegisteredServices counts all services
 func (p ChasmPref) RegisteredServices() int {
-	return len(p.FolderStores)
+	return len(p.FolderStores) + len(p.GDriveStores)
 }
 
 // NeedSetup checks if there are enough services to run
@@ -53,11 +54,18 @@ func (p ChasmPref) NeedSetup() bool {
 func (p ChasmPref) AllCloudStores() []CloudStore {
 
 	// adjust length for new store types
-	cloudStores := make([]CloudStore, len(p.FolderStores))
+	cloudStores := make([]CloudStore, p.RegisteredServices())
 
 	// all other cloud stores go here
+	ind := 0
 	for i, fs := range p.FolderStores {
 		cloudStores[i] = CloudStore(fs)
+		ind += 1
+	}
+
+	for j, gds := range p.GDriveStores {
+		cloudStores[j+ind] = CloudStore(gds)
+		ind += 1
 	}
 
 	return cloudStores
@@ -66,7 +74,7 @@ func (p ChasmPref) AllCloudStores() []CloudStore {
 // Save saves the chasm preferences
 func (p ChasmPref) Save() {
 	chasmFilePath := p.root + string(filepath.Separator) + chasmPrefFile
-	chasmFileBytes, err := json.Marshal(preferences)
+	chasmFileBytes, err := json.MarshalIndent(preferences, "", "    ")
 	check(err)
 
 	ioutil.WriteFile(chasmFilePath, chasmFileBytes, 0660)

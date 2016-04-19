@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/user"
 	"path"
@@ -31,9 +32,9 @@ func startChasm(c *cli.Context) {
 func statusChasm(c *cli.Context) {
 	loadChasm(c)
 
-	color.Green("Chasm root: %s", chasmRoot)
-	for _, cs := range preferences.AllCloudStores() {
-		color.Cyan(cs.Description())
+	color.Green("Cloud stores:")
+	for i, cs := range preferences.AllCloudStores() {
+		fmt.Println(color.GreenString("%v)", i+1), cs.Description())
 	}
 	if preferences.NeedSetup() {
 		color.Red("Warning: not enough services.")
@@ -77,7 +78,17 @@ func addDropbox(c *cli.Context) {
 
 func addDrive(c *cli.Context) {
 	loadChasm(c)
-	color.Red("Error: not implemented.")
+
+	var gdrive GDriveStore
+
+	if (&gdrive).Setup() == false {
+		color.Red("(Cloud Store) Google Drive: setup incomplete.")
+		return
+	}
+	preferences.GDriveStores = append(preferences.GDriveStores, gdrive)
+	preferences.Save()
+
+	color.Green("Success! Added Google Drive Store.")
 }
 
 /// Cli toolchain ///

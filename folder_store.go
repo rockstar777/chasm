@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -15,8 +16,9 @@ type FolderStore struct {
 }
 
 // Setup the folder store
-func (f FolderStore) Setup() {
+func (f FolderStore) Setup() bool {
 	os.MkdirAll(f.Path, 0777)
+	return true
 }
 
 // Upload writes a share to to the folder
@@ -58,5 +60,12 @@ func (f FolderStore) Restore() string {
 // Description prints out human-readable statement
 // about the folder store path
 func (f FolderStore) Description() string {
-	return "FolderStore located at: " + f.Path
+	label := "Folder store at " + f.Path
+
+	files, _ := ioutil.ReadDir(f.Path)
+	for _, f := range files {
+		label += fmt.Sprintf("\n\t%s %s", color.YellowString("-"), f.Name())
+	}
+
+	return label
 }
