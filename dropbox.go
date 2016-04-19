@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -17,16 +16,8 @@ type DropboxStore struct {
 	AccessToken string
 }
 
-type ClientKey struct {
-	Key    string
-	Secret string
-}
-
 func GetClientKeys() (key, secret string) {
-	clientSecret := []byte(DropboxClientSecret)
-	var keys ClientKey
-	json.Unmarshal(clientSecret, &keys)
-	return keys.Key, keys.Secret
+	return DropboxClientKey, DropboxClientSecret
 }
 
 func (d *DropboxStore) Setup() bool {
