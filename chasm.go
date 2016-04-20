@@ -163,7 +163,7 @@ func IsValidPath(filePath string) bool {
 // if the file exists already, we delete the remote share first by its shareId
 func AddFile(filePath string) {
 	if !IsValidPath(filePath) {
-		color.Red("Path %s is in .chasmignore. No actions will be performed.", filePath)
+		color.Blue("Path %s is in .chasmignore. No actions will be performed.", filePath)
 		return
 	}
 	file, _ := os.Open(filePath)

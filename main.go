@@ -83,17 +83,17 @@ func syncChasm(c *cli.Context) {
 
 	// remove invalid entries in existing file map
 	for filePath, _ := range preferences.FileMap {
-		if _, ok := currentFileMap[filePath]; ok {
-			continue
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			delete(preferences.FileMap, filePath)
 		}
-
-		delete(preferences.FileMap, filePath)
 	}
 
 	preferences.Save()
 
 	color.Green("Done resyncing.")
 }
+
+//MARK: Add Handlers
 
 func addFolder(c *cli.Context) {
 	loadChasm(c)
