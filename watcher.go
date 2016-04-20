@@ -26,15 +26,32 @@ func StartWatching(path string) {
 			select {
 			case event := <-watcher.Events:
 				log.Println("event:", event)
+				isDir := isDir(event.Name)
 
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					AddFile(event.Name)
+					if isDir {
+						watcher.Add(event.Name)
+					}
 				} else if event.Op&fsnotify.Write == fsnotify.Write {
 					AddFile(event.Name)
+					if isDir {
+						watcher.Add(event.Name)
+					}
 				} else if event.Op&fsnotify.Rename == fsnotify.Rename {
-					DeleteFile(event.Name)
+					if isDir {
+						watcher.Remove(event.Name)
+						DeleteDir(event.Name)
+					} else {
+						DeleteFile(event.Name)
+					}
 				} else if event.Op&fsnotify.Remove == fsnotify.Remove {
-					DeleteFile(event.Name)
+					if isDir {
+						watcher.Remove(event.Name)
+						DeleteDir(event.Name)
+					} else {
+						DeleteFile(event.Name)
+					}
 				}
 			case err := <-watcher.Errors:
 				log.Println("error:", err)

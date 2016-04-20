@@ -222,23 +222,6 @@ func DeleteFile(filePath string) {
 		return
 	}
 
-	file, _ := os.Open(filePath)
-	fi, err := file.Stat()
-	if err != nil {
-		color.Red("Cannot get file info: %s", err)
-		return
-	}
-	switch mode := fi.Mode(); {
-	case mode.IsDir():
-		files, _ := ioutil.ReadDir(filePath)
-		for _, f := range files {
-			DeleteFile(path.Join(filePath, f.Name()))
-		}
-		return
-	case mode.IsRegular():
-		break
-	}
-
 	allCloudStores := preferences.AllCloudStores()
 
 	if sid, ok := preferences.FileMap[filePath]; ok {
@@ -255,6 +238,17 @@ func DeleteFile(filePath string) {
 	}
 
 	color.Red("Path %s is not tracked. Cannot find share id.", filePath)
+}
+
+func DeleteDir(dirPath string) {
+
+	for filePath, _ := range preferences.FileMap {
+		dirMatch, _ := path.Split(filePath)
+		if path.Clean(dirMatch) != path.Clean(dirPath) {
+			continue
+		}
+		DeleteFile(filePath)
+	}
 }
 
 // Restore shares to the original files
