@@ -65,10 +65,10 @@ func cleanChasm(c *cli.Context) {
 func syncChasm(c *cli.Context) {
 	color.Green("Clean:")
 	cleanChasm(c)
-	color.Green("Done cleaning.\nBeginning Resync:")
+	color.Green("Done cleaning.\nBeginning sync:")
 
 	if preferences.NeedSetup() {
-		color.Red("Error: not enough services. Cannot Resync.")
+		color.Red("Error: not enough services. Cannot sync.")
 		return
 	}
 
@@ -90,7 +90,7 @@ func syncChasm(c *cli.Context) {
 
 	preferences.Save()
 
-	color.Green("Done resyncing.")
+	color.Green("Done syncing.")
 }
 
 //MARK: Add Handlers
