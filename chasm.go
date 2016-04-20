@@ -43,6 +43,9 @@ type ChasmPref struct {
 
 	// maps files to their shareId
 	FileMap map[string]ShareID `json:"files"`
+
+	// keep track of dirs tracked
+	DirMap map[string]bool `json:"dirs"`
 }
 
 // RegisteredServices counts all services
@@ -107,6 +110,7 @@ func CreateOrLoadChasmDir(root string) {
 	chasmFileBytes, err := ioutil.ReadFile(chasmFilePath)
 	if err != nil {
 		color.Green("Creating new .chasm secure folder")
+		preferences.DirMap = make(map[string]bool)
 		preferences.FileMap = make(map[string]ShareID)
 		preferences.FileMap[chasmFilePath] = ShareID(chasmPrefFile)
 	} else {
@@ -175,6 +179,8 @@ func AddFile(filePath string) {
 	switch mode := fi.Mode(); {
 	case mode.IsDir():
 		files, _ := ioutil.ReadDir(filePath)
+		preferences.DirMap[path.Clean(filePath)] = true
+
 		for _, f := range files {
 			AddFile(path.Join(filePath, f.Name()))
 		}
@@ -222,6 +228,12 @@ func DeleteFile(filePath string) {
 		return
 	}
 
+	potenDirPath := path.Clean(filePath)
+	if _, ok := preferences.DirMap[potenDirPath]; ok {
+		DeleteDir(potenDirPath)
+		return
+	}
+
 	allCloudStores := preferences.AllCloudStores()
 
 	if sid, ok := preferences.FileMap[filePath]; ok {
@@ -241,6 +253,9 @@ func DeleteFile(filePath string) {
 }
 
 func DeleteDir(dirPath string) {
+
+	//remove dir path
+	delete(preferences.DirMap, dirPath)
 
 	for filePath, _ := range preferences.FileMap {
 		dirMatch, _ := path.Split(filePath)
@@ -276,10 +291,15 @@ func Restore() {
 		return
 	}
 
-	// (3) finally, for the remaining files, restore and save
+	// (3) create necessary directories, update in prefs.
+	for dirPath, _ := range restoredPrefs.DirMap {
+		os.MkdirAll(dirPath, 0770)
+		preferences.DirMap[dirPath] = true
+	}
+
+	// (4) finally, for the remaining files, restore and save
 	for filePath, sid := range restoredPrefs.FileMap {
 		fileBytes := restoreShareID(sid, sharePaths)
-		os.MkdirAll(path.Dir(filePath), 0770)
 		err := ioutil.WriteFile(filePath, fileBytes, 0770)
 		if err != nil {
 			color.Red("Error writing restored file %s: %s", filePath, err)

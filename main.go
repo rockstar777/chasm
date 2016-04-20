@@ -27,7 +27,7 @@ func startChasm(c *cli.Context) {
 
 	// start the watcher
 	color.Green("Starting chasm. Listening on %s", preferences.root)
-	StartWatching(preferences.root)
+	StartWatching(preferences.root, preferences.DirMap)
 }
 
 func statusChasm(c *cli.Context) {

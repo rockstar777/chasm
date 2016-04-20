@@ -8,7 +8,7 @@ import (
 )
 
 // StartWatching a path indefinitely.
-func StartWatching(path string) {
+func StartWatching(path string, subDirs map[string]bool) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
@@ -18,6 +18,10 @@ func StartWatching(path string) {
 	err = watcher.Add(path)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	for sub, _ := range subDirs {
+		watcher.Add(sub)
 	}
 
 	done := make(chan bool)
@@ -39,20 +43,11 @@ func StartWatching(path string) {
 						watcher.Add(event.Name)
 					}
 				} else if event.Op&fsnotify.Rename == fsnotify.Rename {
-					if isDir {
-						watcher.Remove(event.Name)
-						DeleteDir(event.Name)
-					} else {
-						DeleteFile(event.Name)
-					}
+					DeleteFile(event.Name)
 				} else if event.Op&fsnotify.Remove == fsnotify.Remove {
-					if isDir {
-						watcher.Remove(event.Name)
-						DeleteDir(event.Name)
-					} else {
-						DeleteFile(event.Name)
-					}
+					DeleteFile(event.Name)
 				}
+
 			case err := <-watcher.Errors:
 				log.Println("error:", err)
 			}
