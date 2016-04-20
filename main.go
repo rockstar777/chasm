@@ -75,6 +75,9 @@ func syncChasm(c *cli.Context) {
 	files, _ := ioutil.ReadDir(preferences.root)
 	currentFileMap := make(map[string]bool)
 	for _, f := range files {
+		if f.Name() == chasmPrefFile {
+			continue
+		}
 		path := path.Join(preferences.root, f.Name())
 		currentFileMap[path] = true
 		fmt.Println("Sharing ", path)
@@ -89,6 +92,7 @@ func syncChasm(c *cli.Context) {
 	}
 
 	preferences.Save()
+	AddFile(path.Join(preferences.root, chasmPrefFile))
 
 	color.Green("Done syncing.")
 }
