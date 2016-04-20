@@ -83,7 +83,7 @@ func (p ChasmPref) AllCloudStores() []CloudStore {
 
 // Save saves the chasm preferences
 func (p ChasmPref) Save() {
-	chasmFilePath := p.root + string(filepath.Separator) + chasmPrefFile
+	chasmFilePath := path.Join(p.root, chasmPrefFile)
 	chasmFileBytes, err := json.MarshalIndent(preferences, "", "    ")
 	check(err)
 
@@ -220,6 +220,23 @@ func DeleteFile(filePath string) {
 	if !IsValidPath(filePath) {
 		color.Red("Path %s is in .chasmignore. No actions will be performed.", filePath)
 		return
+	}
+
+	file, _ := os.Open(filePath)
+	fi, err := file.Stat()
+	if err != nil {
+		color.Red("Cannot get file info: %s", err)
+		return
+	}
+	switch mode := fi.Mode(); {
+	case mode.IsDir():
+		files, _ := ioutil.ReadDir(filePath)
+		for _, f := range files {
+			DeleteFile(path.Join(filePath, f.Name()))
+		}
+		return
+	case mode.IsRegular():
+		break
 	}
 
 	allCloudStores := preferences.AllCloudStores()

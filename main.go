@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/user"
 	"path"
@@ -59,6 +60,38 @@ func cleanChasm(c *cli.Context) {
 	for _, cs := range preferences.AllCloudStores() {
 		cs.Clean()
 	}
+}
+
+func resyncChasm(c *cli.Context) {
+	color.Green("Clean:")
+	cleanChasm(c)
+	color.Green("Done cleaning.\nBeginning Resync:")
+
+	if preferences.NeedSetup() {
+		color.Red("Error: not enough services. Cannot Resync.")
+		return
+	}
+
+	files, _ := ioutil.ReadDir(preferences.root)
+	currentFileMap := make(map[string]bool)
+	for _, f := range files {
+		currentFileMap[f.Name()] = true
+		fmt.Println("Sharing ", f.Name())
+		AddFile(path.Join(preferences.root, f.Name()))
+	}
+
+	// remove invalid entries in existing file map
+	for filePath, _ := range preferences.FileMap {
+		if _, ok := currentFileMap[filePath]; ok {
+			continue
+		}
+
+		delete(preferences.FileMap, filePath)
+	}
+
+	preferences.Save()
+
+	color.Green("Done resyncing.")
 }
 
 func addFolder(c *cli.Context) {
@@ -181,6 +214,12 @@ func main() {
 			Aliases: nil,
 			Usage:   "Deletes all shares in cloud stores",
 			Action:  cleanChasm,
+		},
+		{
+			Name:    "resync",
+			Aliases: nil,
+			Usage:   "Clean cloud stores and resync everything",
+			Action:  resyncChasm,
 		},
 	}
 
