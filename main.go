@@ -62,7 +62,7 @@ func cleanChasm(c *cli.Context) {
 	}
 }
 
-func resyncChasm(c *cli.Context) {
+func syncChasm(c *cli.Context) {
 	color.Green("Clean:")
 	cleanChasm(c)
 	color.Green("Done cleaning.\nBeginning Resync:")
@@ -75,9 +75,10 @@ func resyncChasm(c *cli.Context) {
 	files, _ := ioutil.ReadDir(preferences.root)
 	currentFileMap := make(map[string]bool)
 	for _, f := range files {
-		currentFileMap[f.Name()] = true
-		fmt.Println("Sharing ", f.Name())
-		AddFile(path.Join(preferences.root, f.Name()))
+		path := path.Join(preferences.root, f.Name())
+		currentFileMap[path] = true
+		fmt.Println("Sharing ", path)
+		AddFile(path)
 	}
 
 	// remove invalid entries in existing file map
@@ -216,10 +217,10 @@ func main() {
 			Action:  cleanChasm,
 		},
 		{
-			Name:    "resync",
+			Name:    "sync",
 			Aliases: nil,
-			Usage:   "Clean cloud stores and resync everything",
-			Action:  resyncChasm,
+			Usage:   "Clean cloud stores, sync all items in Chasm folder by secret-sharing.",
+			Action:  syncChasm,
 		},
 	}
 
