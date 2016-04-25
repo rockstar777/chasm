@@ -45,15 +45,11 @@ func (d *DropboxStore) Setup() bool {
 	}
 
 	uid := account.UID
-	exists := false
 	for _, d := range preferences.DropboxStores {
 		if d.UserID == uid {
-			exists = true
+			color.Red("Account for %s already exists.", account.DisplayName)
+			return false
 		}
-	}
-	if exists {
-		color.Red("Account for %s already exists.", account.DisplayName)
-		return false
 	}
 
 	// set the oauth info
