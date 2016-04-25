@@ -143,7 +143,7 @@ func addDropbox(c *cli.Context) {
 	}
 
 	// only 1 dropbox store
-	preferences.DropboxStores = []DropboxStore{dropbox}
+	preferences.DropboxStores = append(preferences.DropboxStores, dropbox)
 	preferences.Save()
 
 	color.Green("Success! Added Dropbox Store.")

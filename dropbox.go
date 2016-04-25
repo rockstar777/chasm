@@ -14,6 +14,7 @@ import (
 type DropboxStore struct {
 	Dropbox     dropbox.Dropbox `json:"dropbox"`
 	AccessToken string
+	UserID      int
 }
 
 func GetClientKeys() (key, secret string) {
@@ -21,7 +22,6 @@ func GetClientKeys() (key, secret string) {
 }
 
 func (d *DropboxStore) Setup() bool {
-	// config, err := getConfig()
 	db := dropbox.NewDropbox()
 	key, secret := GetClientKeys()
 	db.SetAppInfo(key, secret)
@@ -38,9 +38,28 @@ func (d *DropboxStore) Setup() bool {
 		return false
 	}
 
+	account, err := db.GetAccountInfo()
+	if err != nil {
+		color.Red("Unable to get account information: %v", err)
+		return false
+	}
+
+	uid := account.UID
+	exists := false
+	for _, d := range preferences.DropboxStores {
+		if d.UserID == uid {
+			exists = true
+		}
+	}
+	if exists {
+		color.Red("Account for %s already exists.", account.DisplayName)
+		return false
+	}
+
 	// set the oauth info
 	d.Dropbox = *db
 	d.AccessToken = db.AccessToken()
+	d.UserID = uid
 
 	return true
 }
