@@ -166,7 +166,7 @@ func addDrive(c *cli.Context) {
 	}
 
 	// only 1 gdrive store
-	preferences.GDriveStores = []GDriveStore{gdrive}
+	preferences.GDriveStores = append(preferences.GDriveStores, gdrive)
 	preferences.Save()
 
 	color.Green("Success! Added Google Drive Store.")

@@ -18,6 +18,7 @@ import (
 type GDriveStore struct {
 	Config     oauth2.Config `json:"oauth_config"`
 	OAuthToken oauth2.Token  `json:"oauth_token"`
+	UserID     string        `json:"user_id"`
 }
 
 // Setup GDrive
@@ -39,6 +40,30 @@ func (g *GDriveStore) Setup() bool {
 	g.Config = *config
 	g.OAuthToken = *tok
 
+	ctx := context.Background()
+	client := config.Client(ctx, &g.OAuthToken)
+
+	svc, err := drive.New(client)
+	if err != nil {
+		color.Red("Unable to retrieve drive Client %v", err)
+		return false
+	}
+
+	account, err := svc.About.Get().Fields("user").Do()
+	if err != nil {
+		color.Red("Unable to retrieve drive information %v", err)
+		return false
+	}
+	userID := account.User.PermissionId
+
+	for _, gds := range preferences.GDriveStores {
+		if gds.UserID == userID {
+			color.Red("Google Drive Account for %v (%v) already exists.", account.User.DisplayName, account.User.EmailAddress)
+			return false
+		}
+	}
+
+	g.UserID = userID
 	return true
 }
 
