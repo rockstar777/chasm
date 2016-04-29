@@ -70,6 +70,10 @@ func (f FolderStore) Description() string {
 	return label
 }
 
+func (f FolderStore) ShortDescription() string {
+	return "Folder store: " + f.Path
+}
+
 // Clean deletes all shares from the folder store
 func (f FolderStore) Clean() {
 	color.Yellow("Cleaning folder store:")

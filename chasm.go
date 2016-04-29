@@ -24,6 +24,7 @@ type CloudStore interface {
 	Restore() string
 
 	Description() string
+	ShortDescription() string
 
 	Clean()
 }
@@ -66,18 +67,18 @@ func (p ChasmPref) AllCloudStores() []CloudStore {
 
 	// all other cloud stores go here
 	ind := 0
-	for i, fs := range p.FolderStores {
-		cloudStores[i] = CloudStore(fs)
+	for _, fs := range p.FolderStores {
+		cloudStores[ind] = CloudStore(fs)
 		ind += 1
 	}
 
-	for j, gds := range p.GDriveStores {
-		cloudStores[j+ind] = CloudStore(gds)
+	for _, gds := range p.GDriveStores {
+		cloudStores[ind] = CloudStore(gds)
 		ind += 1
 	}
 
-	for k, dbs := range p.DropboxStores {
-		cloudStores[k+ind] = CloudStore(dbs)
+	for _, dbs := range p.DropboxStores {
+		cloudStores[ind] = CloudStore(dbs)
 		ind += 1
 	}
 

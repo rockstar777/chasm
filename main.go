@@ -54,6 +54,46 @@ func restoreChasm(c *cli.Context) {
 	Restore()
 }
 
+func removeChasm(c *cli.Context) {
+	loadChasm(c)
+
+	color.Green("Cloud stores:")
+	for i, cs := range preferences.AllCloudStores() {
+		fmt.Println(color.GreenString("%v)", i+1), cs.ShortDescription())
+	}
+
+	numStores := preferences.RegisteredServices()
+
+	color.Blue("Enter the number of the store you would like to remove:")
+
+	var d int
+	for true {
+		_, err := fmt.Scanf("%d", &d)
+		if err != nil || d < 0 || d > numStores {
+			color.Red("Please enter a number between %v and %v", 1, numStores)
+		} else {
+			break
+		}
+	}
+
+	if d <= len(preferences.FolderStores) {
+		ind := d - 1
+		preferences.FolderStores = append(preferences.FolderStores[:ind], preferences.FolderStores[ind+1:]...)
+		color.Green("Deleting Folder Store...")
+	} else if d <= len(preferences.FolderStores)+len(preferences.GDriveStores) {
+		ind := d - 1 - len(preferences.FolderStores)
+		preferences.GDriveStores = append(preferences.GDriveStores[:ind], preferences.GDriveStores[ind+1:]...)
+		color.Green("Deleting Google Drive Store...")
+	} else {
+		ind := d - 1 - len(preferences.FolderStores) - len(preferences.GDriveStores)
+		preferences.DropboxStores = append(preferences.DropboxStores[:ind], preferences.DropboxStores[ind+1:]...)
+		color.Green("Deleting Dropbox Store...")
+	}
+
+	preferences.Save()
+	syncChasm(c)
+}
+
 func cleanChasm(c *cli.Context) {
 	loadChasm(c)
 
@@ -213,6 +253,12 @@ func main() {
 			Aliases: nil,
 			Usage:   "Restores chasm after repeating setup.",
 			Action:  restoreChasm,
+		},
+		{
+			Name:    "remove",
+			Aliases: nil,
+			Usage:   "Removes a cloud store.",
+			Action:  removeChasm,
 		},
 		{
 			Name:    "clean",

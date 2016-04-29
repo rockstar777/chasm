@@ -147,12 +147,10 @@ func (g GDriveStore) Restore() string {
 }
 
 func (g GDriveStore) Description() string {
-	label := "Google Drive Store"
-
 	ctx := context.Background()
 	config := &g.Config
 	client := config.Client(ctx, &g.OAuthToken)
-
+	label := "Google Drive Store"
 	svc, err := drive.New(client)
 	if err != nil {
 		color.Red("Unable to retrieve drive Client %v", err)
@@ -166,11 +164,39 @@ func (g GDriveStore) Description() string {
 		return label
 	}
 
+	account, err := svc.About.Get().Fields("user").Do()
+	if err != nil {
+		color.Red("Unable to retrieve drive information %v", err)
+		return label
+	}
+
+	label = fmt.Sprintf("Google Drive Store: %v (%v)", account.User.DisplayName, account.User.EmailAddress)
+
 	for _, i := range r.Files {
 		label += fmt.Sprintf("\n\t%s %s", color.YellowString("-"), i.Name)
 	}
 
 	return label
+}
+
+func (g GDriveStore) ShortDescription() string {
+	ctx := context.Background()
+	config := &g.Config
+	client := config.Client(ctx, &g.OAuthToken)
+	label := "Google Drive Store"
+	svc, err := drive.New(client)
+	if err != nil {
+		color.Red("Unable to retrieve drive Client %v", err)
+		return label
+	}
+
+	account, err := svc.About.Get().Fields("user").Do()
+	if err != nil {
+		color.Red("Unable to retrieve drive information %v", err)
+		return label
+	}
+
+	return fmt.Sprintf("Google Drive Store: %v (%v)", account.User.DisplayName, account.User.EmailAddress)
 }
 
 // Clean deletes all shares from the folder store
