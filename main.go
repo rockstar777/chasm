@@ -64,7 +64,7 @@ func removeChasm(c *cli.Context) {
 
 	numStores := preferences.RegisteredServices()
 
-	color.Blue("Enter the number of the store you would like to remove:")
+	color.Cyan("Enter the number of the store you would like to remove:")
 
 	var d int
 	for true {
