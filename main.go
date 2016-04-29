@@ -79,15 +79,15 @@ func removeChasm(c *cli.Context) {
 	if d <= len(preferences.FolderStores) {
 		ind := d - 1
 		preferences.FolderStores = append(preferences.FolderStores[:ind], preferences.FolderStores[ind+1:]...)
-		color.Green("Deleting Folder Store...")
+		color.Yellow("Deleting Folder Store...")
 	} else if d <= len(preferences.FolderStores)+len(preferences.GDriveStores) {
 		ind := d - 1 - len(preferences.FolderStores)
 		preferences.GDriveStores = append(preferences.GDriveStores[:ind], preferences.GDriveStores[ind+1:]...)
-		color.Green("Deleting Google Drive Store...")
+		color.Yellow("Deleting Google Drive Store...")
 	} else {
 		ind := d - 1 - len(preferences.FolderStores) - len(preferences.GDriveStores)
 		preferences.DropboxStores = append(preferences.DropboxStores[:ind], preferences.DropboxStores[ind+1:]...)
-		color.Green("Deleting Dropbox Store...")
+		color.Yellow("Deleting Dropbox Store...")
 	}
 
 	preferences.Save()
