@@ -17,6 +17,12 @@ type FolderStore struct {
 
 // Setup the folder store
 func (f FolderStore) Setup() bool {
+	for _, fs := range preferences.FolderStores {
+		if fs.Path == f.Path {
+			color.Red("Folder store at %v already exists.", f.Path)
+			return false
+		}
+	}
 	os.MkdirAll(f.Path, 0777)
 	return true
 }
