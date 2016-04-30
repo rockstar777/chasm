@@ -216,7 +216,7 @@ func main() {
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:        "root",
+			Name:        "root, r",
 			Value:       defaultRoot,
 			Usage:       "Destination of the Chasm secure folder.",
 			Destination: &chasmRoot,

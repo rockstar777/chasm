@@ -165,8 +165,8 @@ func IsValidPath(filePath string) bool {
 }
 
 // AddFile secret shares the file, and uploads each share to corresponding services
-// if the file exists already, we delete the remote share first by its shareId
 func AddFile(filePath string) {
+	// if the file exists already, we delete the remote share first by its shareId
 	if !IsValidPath(filePath) {
 		color.Blue("Path %s is in .chasmignore. No actions will be performed.", filePath)
 		return
@@ -177,6 +177,7 @@ func AddFile(filePath string) {
 		color.Red("Cannot get file info: %s", err)
 		return
 	}
+
 	switch mode := fi.Mode(); {
 	case mode.IsDir():
 		files, _ := ioutil.ReadDir(filePath)
@@ -288,7 +289,7 @@ func Restore() {
 	var restoredPrefs ChasmPref
 	err := json.Unmarshal(chasmFileBytes, &restoredPrefs)
 	if err != nil {
-		color.Red("Cannot restore chasm preferecnes file from cloud services.")
+		color.Red("Cannot restore chasm preferences file from cloud services.")
 		return
 	}
 
@@ -301,6 +302,10 @@ func Restore() {
 	// (4) finally, for the remaining files, restore and save
 	for filePath, sid := range restoredPrefs.FileMap {
 		fileBytes := restoreShareID(sid, sharePaths)
+		if len(fileBytes) == 0 {
+			continue
+		}
+
 		err := ioutil.WriteFile(filePath, fileBytes, 0770)
 		if err != nil {
 			color.Red("Error writing restored file %s: %s", filePath, err)
@@ -313,6 +318,7 @@ func Restore() {
 func restoreShareID(sid ShareID, sharePaths []string) []byte {
 	fileShares := make([]Share, len(sharePaths))
 
+	sharesFound := 0
 	for i, sp := range sharePaths {
 		file := path.Join(sp, string(sid))
 		dataBytes, err := ioutil.ReadFile(file)
@@ -321,9 +327,14 @@ func restoreShareID(sid ShareID, sharePaths []string) []byte {
 			continue
 		}
 
-		share := Share{SID: sid, Data: dataBytes}
-		fileShares[i] = share
+		fileShares[i] = Share{SID: sid, Data: dataBytes}
+		sharesFound++
 	}
 
-	return CombineShares(fileShares)
+	if sharesFound < preferences.RegisteredServices() {
+		color.Red("Couldn't retrieve enough shares to restore %s", sid)
+		return []byte{}
+	} else {
+		return CombineShares(fileShares)
+	}
 }
