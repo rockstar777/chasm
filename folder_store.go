@@ -32,7 +32,7 @@ func (f FolderStore) Upload(share Share) {
 	sharePath := path.Join(f.Path, string(share.SID))
 	err := ioutil.WriteFile(sharePath, share.Data, 0770)
 	if err != nil {
-		color.Red("Error!!: %s", err)
+		color.Red("Error: %s", err)
 		return
 	}
 

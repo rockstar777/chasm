@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"crypto/rand"
 	"encoding/base64"
 	"github.com/codahale/sss"
@@ -41,8 +40,6 @@ func CombineShares(shares []Share) []byte {
 	if len(shares) > 255 {
 		panic("n > 255 not supported")
 	}
-
-	fmt.Println(shares)
 
 	sharesBytes := make(map[byte][]byte)
 	for _, v := range shares {

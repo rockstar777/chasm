@@ -165,8 +165,8 @@ func IsValidPath(filePath string) bool {
 }
 
 // AddFile secret shares the file, and uploads each share to corresponding services
+// if the file exists already, we delete the remote share first by its shareId
 func AddFile(filePath string) {
-	// if the file exists already, we delete the remote share first by its shareId
 	if !IsValidPath(filePath) {
 		color.Blue("Path %s is in .chasmignore. No actions will be performed.", filePath)
 		return
