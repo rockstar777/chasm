@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/codegangsta/cli"
+	"github.com/fatih/color"
 	"io/ioutil"
 	"os"
 	"os/user"
 	"path"
-
-	"github.com/codegangsta/cli"
-	"github.com/fatih/color"
+	"sync"
 )
 
 /// chasm commands ///
@@ -102,10 +102,16 @@ func removeChasm(c *cli.Context) {
 
 func cleanChasm(c *cli.Context) {
 	loadChasm(c)
-
+	var wg sync.WaitGroup
 	for _, cs := range preferences.AllCloudStores() {
-		cs.Clean()
+		wg.Add(1)
+		go func(c CloudStore) {
+			defer wg.Done()
+			c.Clean()
+			color.Green("Done cleaning %v", c.ShortDescription())
+		}(cs)
 	}
+	wg.Wait()
 }
 
 func syncChasm(c *cli.Context) {

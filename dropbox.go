@@ -140,8 +140,6 @@ func (d DropboxStore) ShortDescription() string {
 }
 
 func (d DropboxStore) Clean() {
-	color.Yellow("Cleaning dropbox:")
-
 	key, secret := GetClientKeys()
 	d.Dropbox.SetAppInfo(key, secret)
 	d.Dropbox.SetAccessToken(d.AccessToken)
@@ -154,7 +152,7 @@ func (d DropboxStore) Clean() {
 
 	for _, i := range entry.Contents {
 		name := filepath.Base(i.Path)
-		fmt.Println("\t- remove ", name)
+		color.Yellow("Removing Dropbox: %v", name)
 		d.Dropbox.Delete(name)
 	}
 

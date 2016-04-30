@@ -226,7 +226,6 @@ func (g GDriveStore) ShortDescription() string {
 
 // Clean deletes all shares from the folder store
 func (g GDriveStore) Clean() {
-	color.Yellow("Cleaning google drive:")
 
 	ctx := context.Background()
 	config := &g.Config
@@ -245,7 +244,7 @@ func (g GDriveStore) Clean() {
 	}
 
 	for _, i := range r.Files {
-		fmt.Println("\t- remove ", i.Name)
+		color.Yellow("Removing Google Drive: %v", i.Name)
 		svc.Files.Delete(i.Id).Do()
 	}
 }
