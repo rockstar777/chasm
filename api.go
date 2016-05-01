@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"os/user"
 	"path"
 	"sync"
 
+	"github.com/fatih/color"
 	"github.com/googollee/go-socket.io"
 )
 
@@ -100,10 +103,50 @@ func cleanChasm() {
 		go func(c CloudStore) {
 			defer wg.Done()
 			c.Clean()
+			color.Green("Done cleaning %v", c.ShortDescription())
 			messageChannel <- eventMessage{"green", fmt.Sprintf("Done cleaning %v", c.ShortDescription())}
 		}(cs)
 	}
 	wg.Wait()
+}
+
+func syncChasm() {
+	messageChannel <- eventMessage{"yellow", "Cleaning chasm..."}
+	cleanChasm()
+	color.Green("Done cleaning.\nBeginning sync:")
+	messageChannel <- eventMessage{"green", "Done cleaning. Beginning Sync!"}
+
+	if preferences.NeedSetup() {
+		color.Red("Error: not enough services. Cannot sync.")
+		messageChannel <- eventMessage{"green", "Error: not enough services. Cannot sync."}
+		return
+	}
+
+	files, _ := ioutil.ReadDir(preferences.root)
+	currentFileMap := make(map[string]bool)
+	for _, f := range files {
+		if f.Name() == chasmPrefFile {
+			continue
+		}
+		path := path.Join(preferences.root, f.Name())
+		currentFileMap[path] = true
+		fmt.Println("Sharing ", path)
+		messageChannel <- eventMessage{"black", fmt.Sprintf("Sharing %v...", path)}
+		AddFile(path)
+	}
+
+	// remove invalid entries in existing file map
+	for filePath, _ := range preferences.FileMap {
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			delete(preferences.FileMap, filePath)
+		}
+	}
+
+	preferences.Save()
+	AddFile(path.Join(preferences.root, chasmPrefFile))
+
+	color.Green("Done syncing.")
+	messageChannel <- eventMessage{"green", "Done syncing!"}
 }
 
 var chasmRoot string
@@ -123,11 +166,13 @@ func main() {
 	server.On("connection", func(sock socketio.Socket) {
 		killChannel := make(chan bool)
 		go func(k chan bool) {
+			log.Println("Starting to listen on messageChannel")
 			for {
 				select {
 				case message := <-messageChannel:
 					sock.Emit("new event", message)
 				case <-k:
+					log.Println("Killing listener on messageChannel")
 					return
 				}
 			}
@@ -154,6 +199,13 @@ func main() {
 		sock.On("clean chasm", func() {
 			log.Println("got request for clean chasm")
 			cleanChasm()
+			sock.Emit("chasm cleaned")
+		})
+
+		sock.On("sync chasm", func() {
+			log.Println("got request for clean chasm")
+			syncChasm()
+			sock.Emit("chasm synced")
 		})
 
 		// on disconnect
@@ -162,6 +214,7 @@ func main() {
 			killChannel <- true
 		})
 	})
+
 	server.On("error", func(sock socketio.Socket, err error) {
 		log.Println("error:", err)
 	})

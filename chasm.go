@@ -169,12 +169,14 @@ func IsValidPath(filePath string) bool {
 func AddFile(filePath string) {
 	if !IsValidPath(filePath) {
 		color.Blue("Path %s is in .chasmignore. No actions will be performed.", filePath)
+		messageChannel <- eventMessage{"yellow", fmt.Sprintf("Path %s is in .chasmignore. No actions will be performed.", filePath)}
 		return
 	}
 	file, _ := os.Open(filePath)
 	fi, err := file.Stat()
 	if err != nil {
 		color.Red("Cannot get file info: %s", err)
+		messageChannel <- eventMessage{"red", fmt.Sprintf("Cannot get file info: %s", err)}
 		return
 	}
 
@@ -204,6 +206,7 @@ func AddFile(filePath string) {
 	fileBytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		color.Red("Cannot read file: %s", err)
+		messageChannel <- eventMessage{"red", fmt.Sprintf("Cannot read file: %s", err)}
 		return
 	}
 

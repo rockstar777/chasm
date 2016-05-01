@@ -20,6 +20,9 @@ $(document).ready(function() {
 	$("#cleanChasm").click(function() {
 		socket.emit("clean chasm");
 	});
+	$("#syncChasm").click(function() {
+		socket.emit("sync chasm");
+	});
 });
 
 // socket listeners
@@ -55,6 +58,14 @@ socket.on('folder added', function(data) {
 	}
 });
  
+socket.on('chasm cleaned', function() {
+	alert("Chasm was successfully cleaned!");
+});
+
+socket.on('chasm synced', function() {
+	alert("Chasm was successfully synced!");
+});
+
 socket.on('new event', function(data) {
 	$("#event-window").append("<div class=\"event-text " + data.Color + "-text\">" + data.Message + "</div>");
 });
