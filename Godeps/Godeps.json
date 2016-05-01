@@ -4,6 +4,10 @@
 	"GodepVersion": "v62",
 	"Deps": [
 		{
+			"ImportPath": "github.com/codahale/sss",
+			"Rev": "98cba71988bb763a9c8e06d576cbb0f78f017782"
+		},
+		{
 			"ImportPath": "github.com/codegangsta/cli",
 			"Comment": "1.2.0-187-gc31a797",
 			"Rev": "c31a7975863e7810c92e2e288a9ab074f9a88f29"
@@ -19,7 +23,7 @@
 		},
 		{
 			"ImportPath": "github.com/mattn/go-colorable",
-			"Rev": "40e4aedc8fabf8c23e040057540867186712faa5"
+			"Rev": "9cbef7c35391cca05f15f8181dc0b18bc9736dbb"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-isatty",
@@ -64,7 +68,7 @@
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",
-			"Rev": "a80ff226bd294315526e7ae48959d55635143ea7"
+			"Rev": "7a56174f0086b32866ebd746a794417edbc678a1"
 		},
 		{
 			"ImportPath": "google.golang.org/api/drive/v3",

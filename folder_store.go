@@ -16,9 +16,15 @@ type FolderStore struct {
 }
 
 // Setup the folder store
-func (f FolderStore) Setup() bool {
+func (f FolderStore) Setup() (bool, string) {
+	for _, fs := range preferences.FolderStores {
+		if fs.Path == f.Path {
+			color.Red("Folder store at %v already exists.", f.Path)
+			return false, fmt.Sprintf("Folder store at %v already exists.", f.Path)
+		}
+	}
 	os.MkdirAll(f.Path, 0777)
-	return true
+	return true, fmt.Sprintf("Success! %v was successfully added.", f.ShortDescription())
 }
 
 // Upload writes a share to to the folder
@@ -70,12 +76,15 @@ func (f FolderStore) Description() string {
 	return label
 }
 
+func (f FolderStore) ShortDescription() string {
+	return "Folder store: " + f.Path
+}
+
 // Clean deletes all shares from the folder store
 func (f FolderStore) Clean() {
-	color.Yellow("Cleaning folder store:")
 	files, _ := ioutil.ReadDir(f.Path)
 	for _, file := range files {
-		fmt.Println("\t- remove ", file.Name())
+		color.Yellow("Removing Folder Store: %v", file.Name())
 		os.Remove(path.Join(f.Path, file.Name()))
 	}
 }

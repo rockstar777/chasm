@@ -2,13 +2,13 @@ package main
 
 // import (
 // 	"fmt"
+// 	"github.com/codegangsta/cli"
+// 	"github.com/fatih/color"
 // 	"io/ioutil"
 // 	"os"
 // 	"os/user"
 // 	"path"
-
-// 	"github.com/codegangsta/cli"
-// 	"github.com/fatih/color"
+// 	"sync"
 // )
 
 // /// chasm commands ///
@@ -54,12 +54,64 @@ package main
 // 	Restore()
 // }
 
-// func cleanChasm(c *cli.Context) {
+// func removeChasm(c *cli.Context) {
 // 	loadChasm(c)
 
-// 	for _, cs := range preferences.AllCloudStores() {
-// 		cs.Clean()
+// 	numStores := preferences.RegisteredServices()
+// 	if numStores == 0 {
+// 		color.Red("There are no cloud stores to delete.")
+// 		return
 // 	}
+
+// 	color.Green("Cloud stores:")
+// 	for i, cs := range preferences.AllCloudStores() {
+// 		fmt.Println(color.GreenString("%v)", i+1), cs.ShortDescription())
+// 	}
+// 	color.Cyan("Enter the number of the store you would like to remove:")
+
+// 	var d int
+// 	for true {
+// 		_, err := fmt.Scanf("%d", &d)
+// 		if err != nil || d < 0 || d > numStores {
+// 			color.Red("Please enter a number between %v and %v", 1, numStores)
+// 		} else {
+// 			break
+// 		}
+// 	}
+
+// 	if d <= len(preferences.FolderStores) {
+// 		ind := d - 1
+// 		preferences.FolderStores[ind].Clean()
+// 		preferences.FolderStores = append(preferences.FolderStores[:ind], preferences.FolderStores[ind+1:]...)
+// 		color.Yellow("Deleting Folder Store...")
+// 	} else if d <= len(preferences.FolderStores)+len(preferences.GDriveStores) {
+// 		ind := d - 1 - len(preferences.FolderStores)
+// 		preferences.GDriveStores[ind].Clean()
+// 		preferences.GDriveStores = append(preferences.GDriveStores[:ind], preferences.GDriveStores[ind+1:]...)
+// 		color.Yellow("Deleting Google Drive Store...")
+// 	} else {
+// 		ind := d - 1 - len(preferences.FolderStores) - len(preferences.GDriveStores)
+// 		preferences.DropboxStores[ind].Clean()
+// 		preferences.DropboxStores = append(preferences.DropboxStores[:ind], preferences.DropboxStores[ind+1:]...)
+// 		color.Yellow("Deleting Dropbox Store...")
+// 	}
+
+// 	preferences.Save()
+// 	syncChasm(c)
+// }
+
+// func cleanChasm(c *cli.Context) {
+// 	loadChasm(c)
+// 	var wg sync.WaitGroup
+// 	for _, cs := range preferences.AllCloudStores() {
+// 		wg.Add(1)
+// 		go func(c CloudStore) {
+// 			defer wg.Done()
+// 			c.Clean()
+// 			color.Green("Done cleaning %v", c.ShortDescription())
+// 		}(cs)
+// 	}
+// 	wg.Wait()
 // }
 
 // func syncChasm(c *cli.Context) {
@@ -109,7 +161,11 @@ package main
 // 	}
 
 // 	folderStore.Path = c.Args()[0]
-// 	folderStore.Setup()
+// 	if !folderStore.Setup() {
+// 		color.Red("(Cloud Store) Folder Store: setup incomplete.")
+// 		return
+// 	}
+
 // 	preferences.FolderStores = append(preferences.FolderStores, folderStore)
 // 	preferences.Save()
 
@@ -126,7 +182,7 @@ package main
 // 	}
 
 // 	// only 1 gdrive store
-// 	preferences.GDriveStores = []GDriveStore{gdrive}
+// 	preferences.GDriveStores = append(preferences.GDriveStores, gdrive)
 // 	preferences.Save()
 
 // 	color.Green("Success! Added Google Drive Store.")
@@ -166,7 +222,7 @@ package main
 
 // 	app.Flags = []cli.Flag{
 // 		cli.StringFlag{
-// 			Name:        "root",
+// 			Name:        "root, r",
 // 			Value:       defaultRoot,
 // 			Usage:       "Destination of the Chasm secure folder.",
 // 			Destination: &chasmRoot,
@@ -213,6 +269,12 @@ package main
 // 			Aliases: nil,
 // 			Usage:   "Restores chasm after repeating setup.",
 // 			Action:  restoreChasm,
+// 		},
+// 		{
+// 			Name:    "remove",
+// 			Aliases: nil,
+// 			Usage:   "Removes a cloud store.",
+// 			Action:  removeChasm,
 // 		},
 // 		{
 // 			Name:    "clean",

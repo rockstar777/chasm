@@ -32,6 +32,36 @@ func addDropbox(tok string) socketResponse {
 	return socketResponse{success, message}
 }
 
+func addDrive(tok string) socketResponse {
+	loadChasm()
+
+	var gdrive GDriveStore
+
+	success, message := (&gdrive).Setup(tok)
+	if success {
+		preferences.GDriveStores = append(preferences.GDriveStores, gdrive)
+		preferences.Save()
+	}
+
+	return socketResponse{success, message}
+}
+
+func addFolder(path string) socketResponse {
+	loadChasm()
+
+	var folderStore FolderStore
+
+	folderStore.Path = path
+	success, message := (&folderStore).Setup()
+
+	if success {
+		preferences.FolderStores = append(preferences.FolderStores, folderStore)
+		preferences.Save()
+	}
+
+	return socketResponse{success, message}
+}
+
 var chasmRoot string
 
 func main() {
@@ -49,9 +79,19 @@ func main() {
 		log.Println("on connection")
 
 		// request to get the preferences object
-		sock.On("add dropbox", func(tok string) {
-			log.Println("got request for add dropbox", tok)
-			sock.Emit("dropbox added", addDropbox(tok))
+		sock.On("add dropbox", func(code string) {
+			log.Println("got request for add dropbox", code)
+			sock.Emit("dropbox added", addDropbox(code))
+		})
+
+		sock.On("add drive", func(code string) {
+			log.Println("got request for add drive", code)
+			sock.Emit("drive added", addDrive(code))
+		})
+
+		sock.On("add folder", func(path string) {
+			log.Println("got request for add folder", path)
+			sock.Emit("drive added", addFolder(path))
 		})
 
 		// on disconnect

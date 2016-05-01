@@ -51,7 +51,7 @@ func (d *DropboxStore) Setup(tok string) (bool, string) {
 	d.AccessToken = db.AccessToken()
 	d.UserID = uid
 
-	return true, "Success!"
+	return true, fmt.Sprintf("Success! %v was successfully added.", d.ShortDescription())
 }
 
 func (d DropboxStore) Upload(share Share) {
@@ -102,6 +102,14 @@ func (d DropboxStore) Description() string {
 		return label
 	}
 
+	account, err := d.Dropbox.GetAccountInfo()
+	if err != nil {
+		color.Red("Unable to get account information: %v", err)
+		return label
+	}
+
+	label = fmt.Sprintf("Dropbox Store: %v", account.DisplayName)
+
 	for _, i := range entry.Contents {
 		label += fmt.Sprintf("\n\t%s %s", color.YellowString("-"), filepath.Base(i.Path))
 	}
@@ -109,9 +117,23 @@ func (d DropboxStore) Description() string {
 	return label
 }
 
-func (d DropboxStore) Clean() {
-	color.Yellow("Cleaning dropbox:")
+func (d DropboxStore) ShortDescription() string {
+	label := "Dropbox Store"
 
+	key, secret := GetClientKeys()
+	d.Dropbox.SetAppInfo(key, secret)
+	d.Dropbox.SetAccessToken(d.AccessToken)
+
+	account, err := d.Dropbox.GetAccountInfo()
+	if err != nil {
+		color.Red("Unable to get account information: %v", err)
+		return label
+	}
+
+	return fmt.Sprintf("Dropbox Store: %v", account.DisplayName)
+}
+
+func (d DropboxStore) Clean() {
 	key, secret := GetClientKeys()
 	d.Dropbox.SetAppInfo(key, secret)
 	d.Dropbox.SetAccessToken(d.AccessToken)
@@ -124,7 +146,7 @@ func (d DropboxStore) Clean() {
 
 	for _, i := range entry.Contents {
 		name := filepath.Base(i.Path)
-		fmt.Println("\t- remove ", name)
+		color.Yellow("Removing Dropbox: %v", name)
 		d.Dropbox.Delete(name)
 	}
 

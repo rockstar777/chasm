@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"github.com/codahale/sss"
 )
 
 // ShareID is a uniqiue id to represent uploaded shares
@@ -14,54 +15,42 @@ type Share struct {
 	Data []byte
 }
 
-// CreateShares creates two shares from secret
-// for now just 2-out-of-n
+// CreateShares creates n shares from secret
 func CreateShares(secret []byte, sid ShareID, n int) []Share {
-	if n > 2 {
-		panic("n > 2. unsupported for now.")
+	if n > 255 {
+		panic("n > 255 not supported")
 	}
 
-	secretLength := len(secret)
+	sharesBytes, err := sss.Split(byte(n), byte(n), secret)
+	check(err)
 
-	firstShareBytes := make([]byte, secretLength)
-	_, err := rand.Read(firstShareBytes)
-	if err != nil {
-		panic(err)
+	shares := make([]Share, n)
+	i := 0
+	for x, y := range sharesBytes {
+		shares[i].SID = sid
+		shares[i].Data = append(y, x)
+		i++
 	}
 
-	secondShareBytes := xor(secret, firstShareBytes)
-
-	return []Share{
-		Share{SID: sid, Data: firstShareBytes},
-		Share{SID: sid, Data: secondShareBytes},
-	}
+	return shares
 }
 
 // CombineShares restores the secret by adding
 func CombineShares(shares []Share) []byte {
-	if len(shares) > 2 {
-		panic("n > 2. unsupported for now.")
+	if len(shares) > 255 {
+		panic("n > 255 not supported")
 	}
 
-	return xor(shares[0].Data, shares[1].Data)
+	sharesBytes := make(map[byte][]byte)
+	for _, v := range shares {
+		i := v.Data[len(v.Data)-1]
+		sharesBytes[i] = v.Data[:len(v.Data)-1]
+	}
+
+	return sss.Combine(sharesBytes)
 }
 
 /// Helper Functions ///
-
-func xor(a, b []byte) []byte {
-	if len(a) != len(b) {
-		panic("xor must take equal arrays")
-	}
-	n := len(a)
-
-	res := make([]byte, n)
-
-	for i := 0; i < len(a); i++ {
-		res[i] = a[i] ^ b[i]
-	}
-
-	return res
-}
 
 // RandomShareID randomly generates a 16 byte base64URL encoded string
 func RandomShareID() ShareID {

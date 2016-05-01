@@ -24,6 +24,7 @@ type CloudStore interface {
 	Restore() string
 
 	Description() string
+	ShortDescription() string
 
 	Clean()
 }
@@ -66,18 +67,18 @@ func (p ChasmPref) AllCloudStores() []CloudStore {
 
 	// all other cloud stores go here
 	ind := 0
-	for i, fs := range p.FolderStores {
-		cloudStores[i] = CloudStore(fs)
+	for _, fs := range p.FolderStores {
+		cloudStores[ind] = CloudStore(fs)
 		ind += 1
 	}
 
-	for j, gds := range p.GDriveStores {
-		cloudStores[j+ind] = CloudStore(gds)
+	for _, gds := range p.GDriveStores {
+		cloudStores[ind] = CloudStore(gds)
 		ind += 1
 	}
 
-	for k, dbs := range p.DropboxStores {
-		cloudStores[k+ind] = CloudStore(dbs)
+	for _, dbs := range p.DropboxStores {
+		cloudStores[ind] = CloudStore(dbs)
 		ind += 1
 	}
 
@@ -176,6 +177,7 @@ func AddFile(filePath string) {
 		color.Red("Cannot get file info: %s", err)
 		return
 	}
+
 	switch mode := fi.Mode(); {
 	case mode.IsDir():
 		files, _ := ioutil.ReadDir(filePath)
@@ -287,7 +289,7 @@ func Restore() {
 	var restoredPrefs ChasmPref
 	err := json.Unmarshal(chasmFileBytes, &restoredPrefs)
 	if err != nil {
-		color.Red("Cannot restore chasm preferecnes file from cloud services.")
+		color.Red("Cannot restore chasm preferences file from cloud services.")
 		return
 	}
 
@@ -300,6 +302,10 @@ func Restore() {
 	// (4) finally, for the remaining files, restore and save
 	for filePath, sid := range restoredPrefs.FileMap {
 		fileBytes := restoreShareID(sid, sharePaths)
+		if len(fileBytes) == 0 {
+			continue
+		}
+
 		err := ioutil.WriteFile(filePath, fileBytes, 0770)
 		if err != nil {
 			color.Red("Error writing restored file %s: %s", filePath, err)
@@ -312,6 +318,7 @@ func Restore() {
 func restoreShareID(sid ShareID, sharePaths []string) []byte {
 	fileShares := make([]Share, len(sharePaths))
 
+	sharesFound := 0
 	for i, sp := range sharePaths {
 		file := path.Join(sp, string(sid))
 		dataBytes, err := ioutil.ReadFile(file)
@@ -320,9 +327,14 @@ func restoreShareID(sid ShareID, sharePaths []string) []byte {
 			continue
 		}
 
-		share := Share{SID: sid, Data: dataBytes}
-		fileShares[i] = share
+		fileShares[i] = Share{SID: sid, Data: dataBytes}
+		sharesFound++
 	}
 
-	return CombineShares(fileShares)
+	if sharesFound < preferences.RegisteredServices() {
+		color.Red("Couldn't retrieve enough shares to restore %s", sid)
+		return []byte{}
+	} else {
+		return CombineShares(fileShares)
+	}
 }

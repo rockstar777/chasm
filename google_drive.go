@@ -18,10 +18,11 @@ import (
 type GDriveStore struct {
 	Config     oauth2.Config `json:"oauth_config"`
 	OAuthToken oauth2.Token  `json:"oauth_token"`
+	UserID     string        `json:"user_id"`
 }
 
 // Setup GDrive
-func (g *GDriveStore) Setup(tok string) (bool, string) {
+func (g *GDriveStore) Setup(code string) (bool, string) {
 	config, err := getConfig()
 
 	if err != nil {
@@ -29,17 +30,42 @@ func (g *GDriveStore) Setup(tok string) (bool, string) {
 		return false, fmt.Sprintf("Unable to parse client secret file to config: %v", err)
 	}
 
-	tok, err := getGDriveTokenFromWeb(config)
+	config.RedirectURL = "http://localhost:2000"
+	tok, err := config.Exchange(oauth2.NoContext, code)
 	if err != nil {
-		color.Red("Unable to get client token: %v", err)
-		return false, fmt.Sprintf("Unable to get client token: %v", err)
+		color.Red("Unable to retrieve token from web %v", err)
+		return false, fmt.Sprintf("Unable to retrieve token from web %v", err)
 	}
 
 	// set the oauth info
 	g.Config = *config
 	g.OAuthToken = *tok
 
-	return true, "Success!"
+	ctx := context.Background()
+	client := config.Client(ctx, &g.OAuthToken)
+
+	svc, err := drive.New(client)
+	if err != nil {
+		color.Red("Unable to retrieve drive Client %v", err)
+		return false, fmt.Sprintf("Unable to retrieve drive Client %v", err)
+	}
+
+	account, err := svc.About.Get().Fields("user").Do()
+	if err != nil {
+		color.Red("Unable to retrieve drive information %v", err)
+		return false, fmt.Sprintf("Unable to retrieve drive information %v", err)
+	}
+	userID := account.User.PermissionId
+
+	for _, gds := range preferences.GDriveStores {
+		if gds.UserID == userID {
+			color.Red("Google Drive Account for %v (%v) already exists.", account.User.DisplayName, account.User.EmailAddress)
+			return false, fmt.Sprintf("Google Drive Account for %v (%v) already exists.", account.User.DisplayName, account.User.EmailAddress)
+		}
+	}
+
+	g.UserID = userID
+	return true, fmt.Sprintf("Success! %v was successfully added.", g.ShortDescription())
 }
 
 func (g GDriveStore) Upload(share Share) {
@@ -147,12 +173,10 @@ func (g GDriveStore) Restore() string {
 }
 
 func (g GDriveStore) Description() string {
-	label := "Google Drive Store"
-
 	ctx := context.Background()
 	config := &g.Config
 	client := config.Client(ctx, &g.OAuthToken)
-
+	label := "Google Drive Store"
 	svc, err := drive.New(client)
 	if err != nil {
 		color.Red("Unable to retrieve drive Client %v", err)
@@ -166,6 +190,14 @@ func (g GDriveStore) Description() string {
 		return label
 	}
 
+	account, err := svc.About.Get().Fields("user").Do()
+	if err != nil {
+		color.Red("Unable to retrieve drive information %v", err)
+		return label
+	}
+
+	label = fmt.Sprintf("Google Drive Store: %v (%v)", account.User.DisplayName, account.User.EmailAddress)
+
 	for _, i := range r.Files {
 		label += fmt.Sprintf("\n\t%s %s", color.YellowString("-"), i.Name)
 	}
@@ -173,9 +205,28 @@ func (g GDriveStore) Description() string {
 	return label
 }
 
+func (g GDriveStore) ShortDescription() string {
+	ctx := context.Background()
+	config := &g.Config
+	client := config.Client(ctx, &g.OAuthToken)
+	label := "Google Drive Store"
+	svc, err := drive.New(client)
+	if err != nil {
+		color.Red("Unable to retrieve drive Client %v", err)
+		return label
+	}
+
+	account, err := svc.About.Get().Fields("user").Do()
+	if err != nil {
+		color.Red("Unable to retrieve drive information %v", err)
+		return label
+	}
+
+	return fmt.Sprintf("Google Drive Store: %v (%v)", account.User.DisplayName, account.User.EmailAddress)
+}
+
 // Clean deletes all shares from the folder store
 func (g GDriveStore) Clean() {
-	color.Yellow("Cleaning google drive:")
 
 	ctx := context.Background()
 	config := &g.Config
@@ -194,7 +245,7 @@ func (g GDriveStore) Clean() {
 	}
 
 	for _, i := range r.Files {
-		fmt.Println("\t- remove ", i.Name)
+		color.Yellow("Removing Google Drive: %v", i.Name)
 		svc.Files.Delete(i.Id).Do()
 	}
 }
