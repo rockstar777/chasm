@@ -1,4 +1,4 @@
-window.$ = window.jQuery = require('./lib/jquery.min.js');
+window.$ = window.jQuery = require('./assets/js/jquery.min.js');
 var exec = require('child_process').exec;
 var electron = window.require('electron');
 var remote = electron.remote;
@@ -30,7 +30,7 @@ socket.on('dropbox added', function(data) {
 	if (data.Success) {
 		alert(data.Message);
 	} else {
-		alert("Error:\n" + data.Message);
+		alert("Error:\n\n" + data.Message);
 	}
 });
 
@@ -39,7 +39,7 @@ socket.on('drive added', function(data) {
 	if (data.Success) {
 		alert(data.Message);
 	} else {
-		alert("Error:\n" + data.Message);
+		alert("Error:\n\n" + data.Message);
 	}
 });
 
@@ -48,7 +48,7 @@ socket.on('folder added', function(data) {
 	if (data.Success) {
 		alert(data.Message);
 	} else {
-		alert("Error:\n" + data.Message);
+		alert("Error:\n\n" + data.Message);
 	}
 });
  
