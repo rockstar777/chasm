@@ -128,12 +128,14 @@ func (g GDriveStore) Restore() string {
 	svc, err := drive.New(client)
 	if err != nil {
 		color.Red("Unable to retrieve drive Client %v", err)
+		messageChannel <- eventMessage{"red", fmt.Sprintf("Unable to retrieve drive Client %v", err)}
 		return ""
 	}
 
 	restoreDir, err := ioutil.TempDir("", "chasm_gdrive_restore")
 	if err != nil {
 		color.Red("Error cannot create temp dir: %v", err)
+		messageChannel <- eventMessage{"red", fmt.Sprintf("Error cannot create temp dir: %v", err)}
 		return ""
 	}
 
@@ -142,17 +144,20 @@ func (g GDriveStore) Restore() string {
 	r, err := svc.Files.List().Spaces("appDataFolder").Do()
 	if err != nil {
 		color.Red("Unable to iterate names %v", err)
+		messageChannel <- eventMessage{"red", fmt.Sprintf("Unable to iterate names %v", err)}
 		return ""
 	}
 
 	color.Yellow("Downloading shares from Google Drive...")
+	messageChannel <- eventMessage{"yellow", fmt.Sprintf("Downloading shares from Google Drive...")}
 
 	for _, i := range r.Files {
 
 		// export file
 		resp, err := svc.Files.Get(i.Id).Download()
 		if err != nil {
-			color.Yellow("Error downloading file %s: %v", i.Name, err)
+			color.Red("Error downloading file %s: %v", i.Name, err)
+			messageChannel <- eventMessage{"red", fmt.Sprintf("Error downloading file %s: %v", i.Name, err)}
 			continue
 		}
 		defer resp.Body.Close()
@@ -161,12 +166,14 @@ func (g GDriveStore) Restore() string {
 		fileBytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			color.Yellow("Error reading downloaded bytes %s: %v", i.Name, err)
+			messageChannel <- eventMessage{"yellow", fmt.Sprintf("Error reading downloaded bytes %s: %v", i.Name, err)}
 			continue
 		}
 
 		// write file to temp dir
 		ioutil.WriteFile(path.Join(restoreDir, i.Name), fileBytes, 0770)
-		fmt.Println("\t - got share ", i.Name)
+		fmt.Println("\t - got share %v", i.Name)
+		messageChannel <- eventMessage{"black", fmt.Sprintf("\t - got share %v", i.Name)}
 	}
 
 	return restoreDir

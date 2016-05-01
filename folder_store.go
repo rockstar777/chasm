@@ -60,6 +60,7 @@ func (f FolderStore) Delete(sid ShareID) {
 func (f FolderStore) Restore() string {
 	// do nothing, folder store exists locally already
 	// return the existing path
+	messageChannel <- eventMessage{"yellow", fmt.Sprintf("Downloading files from Folder Store at %v...", f.Path)}
 	return f.Path
 }
 

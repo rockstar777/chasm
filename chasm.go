@@ -281,6 +281,7 @@ func Restore() {
 		sp := cs.Restore()
 		if sp == "" {
 			color.Red("Restore failed for %v", cs)
+			messageChannel <- eventMessage{"red", fmt.Sprintf("Restore failed for %v", cs)}
 			return
 		}
 		sharePaths[i] = sp
@@ -293,6 +294,7 @@ func Restore() {
 	err := json.Unmarshal(chasmFileBytes, &restoredPrefs)
 	if err != nil {
 		color.Red("Cannot restore chasm preferences file from cloud services.")
+		messageChannel <- eventMessage{"red", "Cannot restore chasm preferences file from cloud services."}
 		return
 	}
 
@@ -312,10 +314,12 @@ func Restore() {
 		err := ioutil.WriteFile(filePath, fileBytes, 0770)
 		if err != nil {
 			color.Red("Error writing restored file %s: %s", filePath, err)
+			messageChannel <- eventMessage{"red", fmt.Sprintf("Error writing restored file %s: %s", filePath, err)}
 			return
 		}
 	}
 	color.Green("Done. Restored all files!")
+	messageChannel <- eventMessage{"green", "Done. Restored all files!"}
 }
 
 func restoreShareID(sid ShareID, sharePaths []string) []byte {
@@ -327,6 +331,7 @@ func restoreShareID(sid ShareID, sharePaths []string) []byte {
 		dataBytes, err := ioutil.ReadFile(file)
 		if err != nil {
 			color.Red("(Skipping share) Cannot read file %s: %s", file, err)
+			messageChannel <- eventMessage{"red", fmt.Sprintf("(Skipping share) Cannot read file %s: %s", file, err)}
 			continue
 		}
 
@@ -336,6 +341,7 @@ func restoreShareID(sid ShareID, sharePaths []string) []byte {
 
 	if sharesFound < preferences.RegisteredServices() {
 		color.Red("Couldn't retrieve enough shares to restore %s", sid)
+		messageChannel <- eventMessage{"red", fmt.Sprintf("Couldn't retrieve enough shares to restore %s", sid)}
 		return []byte{}
 	} else {
 		return CombineShares(fileShares)

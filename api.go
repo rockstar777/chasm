@@ -149,6 +149,20 @@ func syncChasm() {
 	messageChannel <- eventMessage{"green", "Done syncing!"}
 }
 
+func restoreChasm() {
+	loadChasm()
+
+	if preferences.NeedSetup() {
+		color.Red("Warning: not enough services. Cannot Restore.")
+		messageChannel <- eventMessage{"red", "Warning: not enough services. Cannot Restore."}
+		return
+	}
+
+	color.Green("Preparing to restore chasm to %s", preferences.root)
+	messageChannel <- eventMessage{"green", fmt.Sprintf("Preparing to restore chasm to %s", preferences.root)}
+	Restore()
+}
+
 var chasmRoot string
 var messageChannel chan eventMessage
 
@@ -206,6 +220,12 @@ func main() {
 			log.Println("got request for clean chasm")
 			syncChasm()
 			sock.Emit("chasm synced")
+		})
+
+		sock.On("restore chasm", func() {
+			log.Println("got request for restore chasm")
+			restoreChasm()
+			sock.Emit("chasm restored")
 		})
 
 		// on disconnect

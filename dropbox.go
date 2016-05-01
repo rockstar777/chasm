@@ -163,16 +163,19 @@ func (d DropboxStore) Restore() string {
 	restoreDir, err := ioutil.TempDir("", "chasm_dropbox_restore")
 	if err != nil {
 		color.Red("Error cannot create temp dir: %v", err)
+		messageChannel <- eventMessage{"red", fmt.Sprintf("Error cannot create temp dir: %v", err)}
 		return ""
 	}
 
 	entry, err := d.Dropbox.Metadata("", true, false, "", "", 0)
 	if err != nil {
 		color.Red("Unable to iterate names %v", err)
+		messageChannel <- eventMessage{"red", fmt.Sprintf("Unable to iterate names %v", err)}
 		return ""
 	}
 
 	color.Yellow("Downloading shares from Dropbox...")
+	messageChannel <- eventMessage{"yellow", fmt.Sprintf("Downloading shares from Dropbox...")}
 
 	for _, i := range entry.Contents {
 		if !i.IsDir {
@@ -182,7 +185,8 @@ func (d DropboxStore) Restore() string {
 				color.Red("Unable to download file %s: %v", name, err)
 				return ""
 			}
-			fmt.Println("\t - got share ", name)
+			fmt.Printf("\t - got share %v", name)
+			messageChannel <- eventMessage{"black", fmt.Sprintf("\t - got share %v", name)}
 		}
 	}
 

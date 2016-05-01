@@ -23,6 +23,9 @@ $(document).ready(function() {
 	$("#syncChasm").click(function() {
 		socket.emit("sync chasm");
 	});
+	$("#restoreChasm").click(function() {
+		socket.emit("restore chasm");
+	});
 });
 
 // socket listeners
@@ -64,6 +67,10 @@ socket.on('chasm cleaned', function() {
 
 socket.on('chasm synced', function() {
 	alert("Chasm was successfully synced!");
+});
+
+socket.on('chasm restored', function() {
+	alert("Chasm was successfully restored!");
 });
 
 socket.on('new event', function(data) {
