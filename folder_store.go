@@ -85,6 +85,7 @@ func (f FolderStore) Clean() {
 	files, _ := ioutil.ReadDir(f.Path)
 	for _, file := range files {
 		color.Yellow("Removing Folder Store: %v", file.Name())
+		messageChannel <- eventMessage{"yellow", fmt.Sprintf("Removing Folder Store: %v", file.Name())}
 		os.Remove(path.Join(f.Path, file.Name()))
 	}
 }

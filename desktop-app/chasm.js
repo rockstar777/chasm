@@ -3,7 +3,7 @@ var exec = require('child_process').exec;
 var electron = window.require('electron');
 var remote = electron.remote;
 var BrowserWindow = remote.BrowserWindow;
-var PORT = 5000;
+var PORT = 4567;
 var socket = require('socket.io-client')('http://localhost:' + PORT);
 
 // listeners in the GUI
@@ -16,6 +16,9 @@ $(document).ready(function() {
 	});
 	$("#addDrive").click(function() {
 		addService("drive");
+	});
+	$("#cleanChasm").click(function() {
+		socket.emit("clean chasm");
 	});
 });
 

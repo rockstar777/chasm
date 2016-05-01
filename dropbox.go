@@ -141,12 +141,14 @@ func (d DropboxStore) Clean() {
 	entry, err := d.Dropbox.Metadata("", true, false, "", "", 0)
 	if err != nil {
 		color.Red("Unable to iterate names %v", err)
+		messageChannel <- eventMessage{"red", fmt.Sprintf("Unable to iterate names %v", err)}
 		return
 	}
 
 	for _, i := range entry.Contents {
 		name := filepath.Base(i.Path)
 		color.Yellow("Removing Dropbox: %v", name)
+		messageChannel <- eventMessage{"yellow", fmt.Sprintf("Removing Dropbox: %v", name)}
 		d.Dropbox.Delete(name)
 	}
 

@@ -235,17 +235,20 @@ func (g GDriveStore) Clean() {
 	svc, err := drive.New(client)
 	if err != nil {
 		color.Red("Unable to retrieve drive Client %v", err)
+		messageChannel <- eventMessage{"red", fmt.Sprintf("Unable to retrieve drive Client %v", err)}
 		return
 	}
 
 	r, err := svc.Files.List().Spaces("appDataFolder").Do()
 	if err != nil {
 		color.Red("Unable to search for files to delete: %v", err)
+		messageChannel <- eventMessage{"red", fmt.Sprintf("Unable to search for files to delete: %v", err)}
 		return
 	}
 
 	for _, i := range r.Files {
 		color.Yellow("Removing Google Drive: %v", i.Name)
+		messageChannel <- eventMessage{"yellow", fmt.Sprintf("Removing Google Drive: %v", i.Name)}
 		svc.Files.Delete(i.Id).Do()
 	}
 }
