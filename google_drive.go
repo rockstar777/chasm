@@ -21,25 +21,25 @@ type GDriveStore struct {
 }
 
 // Setup GDrive
-func (g *GDriveStore) Setup() bool {
+func (g *GDriveStore) Setup(tok string) (bool, string) {
 	config, err := getConfig()
 
 	if err != nil {
 		color.Red("Unable to parse client secret file to config: %v", err)
-		return false
+		return false, fmt.Sprintf("Unable to parse client secret file to config: %v", err)
 	}
 
 	tok, err := getGDriveTokenFromWeb(config)
 	if err != nil {
 		color.Red("Unable to get client token: %v", err)
-		return false
+		return false, fmt.Sprintf("Unable to get client token: %v", err)
 	}
 
 	// set the oauth info
 	g.Config = *config
 	g.OAuthToken = *tok
 
-	return true
+	return true, "Success!"
 }
 
 func (g GDriveStore) Upload(share Share) {

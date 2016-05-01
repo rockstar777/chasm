@@ -8,7 +8,6 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/stacktic/dropbox"
-	"github.com/toqueteos/webbrowser"
 )
 
 type DropboxStore struct {
@@ -21,34 +20,29 @@ func GetClientKeys() (key, secret string) {
 	return DropboxClientKey, DropboxClientSecret
 }
 
-func (d *DropboxStore) Setup() bool {
+func (d *DropboxStore) Setup(tok string) (bool, string) {
 	db := dropbox.NewDropbox()
 	key, secret := GetClientKeys()
 	db.SetAppInfo(key, secret)
+	db.SetRedirectURL("http://localhost:2000")
 
-	tok, err := getDropboxTokenFromWeb()
+	err := db.AuthCode(tok)
 	if err != nil {
 		color.Red("Unable to get client token: %v", err)
-		return false
-	}
-
-	err = db.AuthCode(tok)
-	if err != nil {
-		color.Red("Unable to get client token: %v", err)
-		return false
+		return false, fmt.Sprintf("Unable to get client token: %v", err)
 	}
 
 	account, err := db.GetAccountInfo()
 	if err != nil {
 		color.Red("Unable to get account information: %v", err)
-		return false
+		return false, fmt.Sprintf("Unable to get account information: %v", err)
 	}
 
 	uid := account.UID
 	for _, d := range preferences.DropboxStores {
 		if d.UserID == uid {
 			color.Red("Account for %s already exists.", account.DisplayName)
-			return false
+			return false, fmt.Sprintf("Account for %s already exists.", account.DisplayName)
 		}
 	}
 
@@ -57,7 +51,7 @@ func (d *DropboxStore) Setup() bool {
 	d.AccessToken = db.AccessToken()
 	d.UserID = uid
 
-	return true
+	return true, "Success!"
 }
 
 func (d DropboxStore) Upload(share Share) {
@@ -169,20 +163,4 @@ func (d DropboxStore) Restore() string {
 	}
 
 	return restoreDir
-}
-
-func getDropboxTokenFromWeb() (string, error) {
-	key, _ := GetClientKeys()
-	authURL := fmt.Sprintf("https://www.dropbox.com/1/oauth2/authorize?client_id=%s&response_type=code", key)
-	webbrowser.Open(authURL)
-
-	color.Yellow("Enter Auth Code: ")
-
-	var code string
-	if _, err := fmt.Scan(&code); err != nil {
-		color.Red("Unable to read authorization code %v", err)
-		return "", err
-	}
-
-	return code, nil
 }
