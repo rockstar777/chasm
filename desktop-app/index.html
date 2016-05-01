@@ -2,14 +2,42 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Hello World!</title>
+    <title>Chasm</title>
     <link rel="stylesheet" type="text/css" href="./assets/css/semantic/dist/semantic.min.css">
+    <link rel="stylesheet" type="text/css" href="./assets/css/chasm.css">
+    <link rel="stylesheet" type="text/css" href="./assets/css/font-awesome.min.css">
     <script src="chasm.js"></script>
   </head>
   <body>
-    <h1>Chasm</h1>
-    <button id="addDropbox" class="ui button">Add Dropbox Store</button>  
-    <button id="addDrive" class="ui button">Add Google Drive Store</button>  
-    <button id="addFolder" class="ui button">Add Folder Store</button>  
+  	<div class="ui grid">
+  		<div class ="seven wide column center aligned">
+		    <h1 id="title">Chasm</h1>
+
+		    <button id="addDropbox" class="ui labeled icon button store-button">
+		     	<i class="fa fa-dropbox store-icon icon"></i>
+		    	Add Dropbox Store
+		    </button>  
+
+		    <br/><br/>
+
+		    <button id="addDrive" class="ui labeled icon button store-button">
+		    	<i class="store-icon icon fa fa-google "></i>
+		    	Add Google Drive Store
+		    </button>  
+
+		    <br/><br/>
+
+		    <button id="addFolder" class="ui labeled icon button store-button">
+		   		<i class="fa fa-folder store-icon icon"></i>
+		    	Add Folder Store
+		    </button>  
+	    </div> 
+
+	    <div class="nine wide column" id="event-column">
+	    	<div id="event-window">
+	    		 
+	    	</div>
+	    </div>
+    </div>
   </body>
 </html>

@@ -52,6 +52,9 @@ socket.on('folder added', function(data) {
 	}
 });
  
+socket.on('new event', function(data) {
+	$("#event-window").append("<div class=\"event-text " + data.Color + "-text\">" + data.Message + "</div>");
+});
 
 // login handlers for the different stores
 var addFolder = function() {

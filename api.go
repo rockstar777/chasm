@@ -14,11 +14,16 @@ type socketResponse struct {
 	Message string
 }
 
+type eventMessage struct {
+	Color   string
+	Message string
+}
+
 func loadChasm() {
 	CreateOrLoadChasmDir(chasmRoot)
 }
 
-func addDropbox(tok string) socketResponse {
+func addDropbox(tok string) (socketResponse, eventMessage) {
 	loadChasm()
 
 	var dropbox DropboxStore
@@ -29,10 +34,13 @@ func addDropbox(tok string) socketResponse {
 		preferences.Save()
 	}
 
-	return socketResponse{success, message}
+	if success {
+		return socketResponse{success, message}, eventMessage{"green", message}
+	}
+	return socketResponse{success, message}, eventMessage{"red", message}
 }
 
-func addDrive(tok string) socketResponse {
+func addDrive(tok string) (socketResponse, eventMessage) {
 	loadChasm()
 
 	var gdrive GDriveStore
@@ -43,10 +51,13 @@ func addDrive(tok string) socketResponse {
 		preferences.Save()
 	}
 
-	return socketResponse{success, message}
+	if success {
+		return socketResponse{success, message}, eventMessage{"green", message}
+	}
+	return socketResponse{success, message}, eventMessage{"red", message}
 }
 
-func addFolder(path string) socketResponse {
+func addFolder(path string) (socketResponse, eventMessage) {
 	loadChasm()
 
 	var folderStore FolderStore
@@ -59,7 +70,10 @@ func addFolder(path string) socketResponse {
 		preferences.Save()
 	}
 
-	return socketResponse{success, message}
+	if success {
+		return socketResponse{success, message}, eventMessage{"green", message}
+	}
+	return socketResponse{success, message}, eventMessage{"red", message}
 }
 
 var chasmRoot string
@@ -81,17 +95,23 @@ func main() {
 		// request to get the preferences object
 		sock.On("add dropbox", func(code string) {
 			log.Println("got request for add dropbox", code)
-			sock.Emit("dropbox added", addDropbox(code))
+			response, message := addDropbox(code)
+			sock.Emit("dropbox added", response)
+			sock.Emit("new event", message)
 		})
 
 		sock.On("add drive", func(code string) {
 			log.Println("got request for add drive", code)
-			sock.Emit("drive added", addDrive(code))
+			response, message := addDrive(code)
+			sock.Emit("dropbox added", response)
+			sock.Emit("new event", message)
 		})
 
 		sock.On("add folder", func(path string) {
 			log.Println("got request for add folder", path)
-			sock.Emit("drive added", addFolder(path))
+			response, message := addFolder(path)
+			sock.Emit("dropbox added", response)
+			sock.Emit("new event", message)
 		})
 
 		// on disconnect
