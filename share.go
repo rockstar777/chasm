@@ -3,7 +3,8 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"github.com/codahale/sss"
+
+	"github.com/agrinman/sss"
 )
 
 // ShareID is a uniqiue id to represent uploaded shares

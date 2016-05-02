@@ -4,8 +4,8 @@
 	"GodepVersion": "v62",
 	"Deps": [
 		{
-			"ImportPath": "github.com/codahale/sss",
-			"Rev": "98cba71988bb763a9c8e06d576cbb0f78f017782"
+			"ImportPath": "github.com/agrinman/sss",
+			"Rev": "5bf618facb898b8c107b4f8cd709f382d369d0c3"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
