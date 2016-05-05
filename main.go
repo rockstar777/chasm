@@ -2,35 +2,39 @@ package main
 
 import (
 	"fmt"
-	"github.com/codegangsta/cli"
-	"github.com/fatih/color"
 	"io/ioutil"
 	"os"
 	"os/user"
 	"path"
 	"sync"
+
+	"github.com/codegangsta/cli"
+	"github.com/fatih/color"
 )
 
 /// chasm commands ///
 
-func loadChasm(c *cli.Context) {
+func loadChasm(c *cli.Context) error {
 	CreateOrLoadChasmDir(chasmRoot)
+	return nil
 }
 
-func startChasm(c *cli.Context) {
+func startChasm(c *cli.Context) error {
 	loadChasm(c)
 
 	if preferences.NeedSetup() {
 		color.Red("Warning: not enough services.")
-		return
+		return nil
 	}
 
 	// start the watcher
 	color.Green("Starting chasm. Listening on %s", preferences.root)
 	StartWatching(preferences.root, preferences.DirMap)
+
+	return nil
 }
 
-func statusChasm(c *cli.Context) {
+func statusChasm(c *cli.Context) error {
 	loadChasm(c)
 
 	color.Green("Cloud stores:")
@@ -40,27 +44,31 @@ func statusChasm(c *cli.Context) {
 	if preferences.NeedSetup() {
 		color.Red("Warning: not enough services.")
 	}
+
+	return nil
 }
 
-func restoreChasm(c *cli.Context) {
+func restoreChasm(c *cli.Context) error {
 	loadChasm(c)
 
 	if preferences.NeedSetup() {
 		color.Red("Warning: not enough services. Cannot Restore.")
-		return
+		return nil
 	}
 
 	color.Green("Preparing to restore chasm to %s", preferences.root)
 	Restore()
+
+	return nil
 }
 
-func removeChasm(c *cli.Context) {
+func removeChasm(c *cli.Context) error {
 	loadChasm(c)
 
 	numStores := preferences.RegisteredServices()
 	if numStores == 0 {
 		color.Red("There are no cloud stores to delete.")
-		return
+		return nil
 	}
 
 	color.Green("Cloud stores:")
@@ -98,9 +106,11 @@ func removeChasm(c *cli.Context) {
 
 	preferences.Save()
 	syncChasm(c)
+
+	return nil
 }
 
-func cleanChasm(c *cli.Context) {
+func cleanChasm(c *cli.Context) error {
 	loadChasm(c)
 	var wg sync.WaitGroup
 	for _, cs := range preferences.AllCloudStores() {
@@ -112,16 +122,18 @@ func cleanChasm(c *cli.Context) {
 		}(cs)
 	}
 	wg.Wait()
+
+	return nil
 }
 
-func syncChasm(c *cli.Context) {
+func syncChasm(c *cli.Context) error {
 	color.Green("Clean:")
 	cleanChasm(c)
 	color.Green("Done cleaning.\nBeginning sync:")
 
 	if preferences.NeedSetup() {
 		color.Red("Error: not enough services. Cannot sync.")
-		return
+		return nil
 	}
 
 	files, _ := ioutil.ReadDir(preferences.root)
@@ -132,7 +144,6 @@ func syncChasm(c *cli.Context) {
 		}
 		path := path.Join(preferences.root, f.Name())
 		currentFileMap[path] = true
-		fmt.Println("Sharing ", path)
 		AddFile(path)
 	}
 
@@ -147,38 +158,41 @@ func syncChasm(c *cli.Context) {
 	AddFile(path.Join(preferences.root, chasmPrefFile))
 
 	color.Green("Done syncing.")
+
+	return nil
 }
 
 //MARK: Add Handlers
 
-func addFolder(c *cli.Context) {
+func addFolder(c *cli.Context) error {
 	loadChasm(c)
 	var folderStore FolderStore
 
 	if len(c.Args()) < 1 {
 		color.Red("Error: missing folder path")
-		return
+		return nil
 	}
 
 	folderStore.Path = c.Args()[0]
 	if !folderStore.Setup() {
 		color.Red("(Cloud Store) Folder Store: setup incomplete.")
-		return
+		return nil
 	}
 
 	preferences.FolderStores = append(preferences.FolderStores, folderStore)
 	preferences.Save()
 
 	color.Green("Success! Added folder store: %s", folderStore.Path)
+	return nil
 }
 
-func addDrive(c *cli.Context) {
+func addDrive(c *cli.Context) error {
 	loadChasm(c)
 	var gdrive GDriveStore
 
 	if (&gdrive).Setup() == false {
 		color.Red("(Cloud Store) Google Drive: setup incomplete.")
-		return
+		return nil
 	}
 
 	// only 1 gdrive store
@@ -186,16 +200,18 @@ func addDrive(c *cli.Context) {
 	preferences.Save()
 
 	color.Green("Success! Added Google Drive Store.")
+
+	return nil
 }
 
-func addDropbox(c *cli.Context) {
+func addDropbox(c *cli.Context) error {
 	loadChasm(c)
 
 	var dropbox DropboxStore
 
 	if (&dropbox).Setup() == false {
 		color.Red("(Cloud Store) Dropbox: setup incomplete.")
-		return
+		return nil
 	}
 
 	// only 1 dropbox store
@@ -203,6 +219,7 @@ func addDropbox(c *cli.Context) {
 	preferences.Save()
 
 	color.Green("Success! Added Dropbox Store.")
+	return nil
 }
 
 /// Cli toolchain ///

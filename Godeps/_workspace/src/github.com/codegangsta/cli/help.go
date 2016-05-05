@@ -15,19 +15,20 @@ var AppHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 
 USAGE:
-   {{.HelpName}} {{if .Flags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
-   {{if .Version}}
+   {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}
+   {{if .Version}}{{if not .HideVersion}}
 VERSION:
    {{.Version}}
-   {{end}}{{if len .Authors}}
+   {{end}}{{end}}{{if len .Authors}}
 AUTHOR(S):
    {{range .Authors}}{{ . }}{{end}}
    {{end}}{{if .Commands}}
-COMMANDS:
-   {{range .Commands}}{{join .Names ", "}}{{ "\t" }}{{.Usage}}
-   {{end}}{{end}}{{if .Flags}}
+COMMANDS:{{range .Categories}}{{if .Name}}
+  {{.Name}}{{ ":" }}{{end}}{{range .Commands}}
+    {{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}{{end}}
+{{end}}{{end}}{{if .VisibleFlags}}
 GLOBAL OPTIONS:
-   {{range .Flags}}{{.}}
+   {{range .VisibleFlags}}{{.}}
    {{end}}{{end}}{{if .Copyright }}
 COPYRIGHT:
    {{.Copyright}}
@@ -41,13 +42,16 @@ var CommandHelpTemplate = `NAME:
    {{.HelpName}} - {{.Usage}}
 
 USAGE:
-   {{.HelpName}}{{if .Flags}} [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{if .Description}}
+   {{.HelpName}}{{if .VisibleFlags}} [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{if .Category}}
+
+CATEGORY:
+   {{.Category}}{{end}}{{if .Description}}
 
 DESCRIPTION:
-   {{.Description}}{{end}}{{if .Flags}}
+   {{.Description}}{{end}}{{if .VisibleFlags}}
 
 OPTIONS:
-   {{range .Flags}}{{.}}
+   {{range .VisibleFlags}}{{.}}
    {{end}}{{ end }}
 `
 
@@ -58,13 +62,14 @@ var SubcommandHelpTemplate = `NAME:
    {{.HelpName}} - {{.Usage}}
 
 USAGE:
-   {{.HelpName}} command{{if .Flags}} [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
+   {{.HelpName}} command{{if .VisibleFlags}} [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
 
-COMMANDS:
-   {{range .Commands}}{{join .Names ", "}}{{ "\t" }}{{.Usage}}
-   {{end}}{{if .Flags}}
+COMMANDS:{{range .Categories}}{{if .Name}}
+  {{.Name}}{{ ":" }}{{end}}{{range .Commands}}
+    {{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}{{end}}
+{{end}}{{if .VisibleFlags}}
 OPTIONS:
-   {{range .Flags}}{{.}}
+   {{range .VisibleFlags}}{{.}}
    {{end}}{{end}}
 `
 
@@ -73,13 +78,14 @@ var helpCommand = Command{
 	Aliases:   []string{"h"},
 	Usage:     "Shows a list of commands or help for one command",
 	ArgsUsage: "[command]",
-	Action: func(c *Context) {
+	Action: func(c *Context) error {
 		args := c.Args()
 		if args.Present() {
 			ShowCommandHelp(c, args.First())
 		} else {
 			ShowAppHelp(c)
 		}
+		return nil
 	},
 }
 
@@ -88,13 +94,14 @@ var helpSubcommand = Command{
 	Aliases:   []string{"h"},
 	Usage:     "Shows a list of commands or help for one command",
 	ArgsUsage: "[command]",
-	Action: func(c *Context) {
+	Action: func(c *Context) error {
 		args := c.Args()
 		if args.Present() {
 			ShowCommandHelp(c, args.First())
 		} else {
 			ShowSubcommandHelp(c)
 		}
+		return nil
 	},
 }
 
@@ -180,7 +187,9 @@ func printHelp(out io.Writer, templ string, data interface{}) {
 	t := template.Must(template.New("help").Funcs(funcMap).Parse(templ))
 	err := t.Execute(w, data)
 	if err != nil {
-		panic(err)
+		// If the writer is closed, t.Execute will fail, and there's nothing
+		// we can do to recover. We could send this to os.Stderr if we need.
+		return
 	}
 	w.Flush()
 }

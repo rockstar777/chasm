@@ -29,6 +29,13 @@ type CloudStore interface {
 	Clean()
 }
 
+// FileShare represents a file share with id shareID, and
+// sha2 checksum Hash
+type FileShare struct {
+	SID  ShareID `json:"sid"`
+	Hash string  `json:"hash"` //base64URL encoded SHA2 has
+}
+
 // ChasmPref represents user/application preferences
 type ChasmPref struct {
 	root string
@@ -43,7 +50,7 @@ type ChasmPref struct {
 	DropboxStores []DropboxStore `json:"dropbox_stores"`
 
 	// maps files to their shareId
-	FileMap map[string]ShareID `json:"files"`
+	FileMap map[string]FileShare `json:"files"`
 
 	// keep track of dirs tracked
 	DirMap map[string]bool `json:"dirs"`
@@ -112,8 +119,8 @@ func CreateOrLoadChasmDir(root string) {
 	if err != nil {
 		color.Green("Creating new .chasm secure folder")
 		preferences.DirMap = make(map[string]bool)
-		preferences.FileMap = make(map[string]ShareID)
-		preferences.FileMap[chasmFilePath] = ShareID(chasmPrefFile)
+		preferences.FileMap = make(map[string]FileShare)
+		preferences.FileMap[chasmFilePath] = FileShare{SID: ShareID(chasmPrefFile), Hash: ""}
 	} else {
 		json.Unmarshal(chasmFileBytes, &preferences)
 	}
@@ -121,9 +128,12 @@ func CreateOrLoadChasmDir(root string) {
 	chasmIgnorePath := path.Join(root, chasmIgnoreFile)
 	_, err = ioutil.ReadFile(chasmIgnorePath)
 	if err != nil {
-		preferences.FileMap[chasmIgnorePath] = ShareID(chasmIgnoreFile)
+		defaultIgnore := []byte(".DS_Store\n")
+
+		preferences.FileMap[chasmIgnorePath] = FileShare{SID: ShareID(chasmIgnoreFile), Hash: SHA256Base64URL(defaultIgnore)}
+
 		// add *.DS_Store to ignore file by default
-		errWrite := ioutil.WriteFile(chasmIgnorePath, []byte(".DS_Store\n"), 0777)
+		errWrite := ioutil.WriteFile(chasmIgnorePath, defaultIgnore, 0777)
 		if errWrite != nil {
 			color.Red("Error: could not write to %s: %s", chasmFilePath, errWrite)
 		}
@@ -192,12 +202,11 @@ func AddFile(filePath string) {
 	}
 
 	var sid ShareID
-	if existingSID, ok := preferences.FileMap[filePath]; ok {
-		sid = existingSID
+	if existingFileShare, ok := preferences.FileMap[filePath]; ok {
+		sid = existingFileShare.SID
 	} else {
 		// create unique share_id
 		sid = RandomShareID()
-		preferences.FileMap[filePath] = sid
 	}
 
 	// read the file
@@ -206,6 +215,8 @@ func AddFile(filePath string) {
 		color.Red("Cannot read file: %s", err)
 		return
 	}
+
+	preferences.FileMap[filePath] = FileShare{SID: sid, Hash: SHA256Base64URL(fileBytes)}
 
 	// create the shares
 	allCloudStores := preferences.AllCloudStores()
@@ -238,10 +249,10 @@ func DeleteFile(filePath string) {
 
 	allCloudStores := preferences.AllCloudStores()
 
-	if sid, ok := preferences.FileMap[filePath]; ok {
+	if fileShare, ok := preferences.FileMap[filePath]; ok {
 		// iteratively delete shares from each cloud store
 		for _, cs := range allCloudStores {
-			cs.Delete(ShareID(sid))
+			cs.Delete(fileShare.SID)
 		}
 
 		delete(preferences.FileMap, filePath)
@@ -300,16 +311,20 @@ func Restore() {
 	}
 
 	// (4) finally, for the remaining files, restore and save
-	for filePath, sid := range restoredPrefs.FileMap {
-		fileBytes := restoreShareID(sid, sharePaths)
+	for filePath, fileShare := range restoredPrefs.FileMap {
+		fileBytes := restoreShareID(fileShare.SID, sharePaths)
 		if len(fileBytes) == 0 {
+			continue
+		}
+
+		if fileShare.SID != ShareID(chasmPrefFile) && checkSHA2(fileShare.Hash, fileBytes) == false {
+			color.Red("Error: invalid SHA2 checksum for share %s. Skipping.", fileShare.SID)
 			continue
 		}
 
 		err := ioutil.WriteFile(filePath, fileBytes, 0770)
 		if err != nil {
 			color.Red("Error writing restored file %s: %s", filePath, err)
-			return
 		}
 	}
 	color.Green("Done. Restored all files!")
