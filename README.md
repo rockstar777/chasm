@@ -1,6 +1,10 @@
 # chasm
 Secure multi-party cloud backup solution based on Shamir's Secret Sharing scheme.
 
+Slides: https://alexgr.in/chasm
+Demo:
+[![asciicast](https://asciinema.org/a/2loda9ax8s22bvnl6nl5e728s.png)](https://asciinema.org/a/2loda9ax8s22bvnl6nl5e728s)
+
 # development
 Make sure you have `godep` installed (`go get github.com/tools/godep`)
 
@@ -20,15 +24,16 @@ VERSION:
    0.1
 
 COMMANDS:
-   start	Start running chasm.
-   status	Prints out the current Chasm setup.
-   add, a	Add a new cloud store to chasm.
-   restore	Restores chasm after repeating setup.
-   help, h	Shows a list of commands or help for one command
+    start	Start running chasm.
+    status	Prints out the current Chasm setup.
+    add		Add a new cloud store to chasm.
+    restore	Restores chasm after repeating setup.
+    remove	Removes a cloud store.
+    clean	Deletes all shares in cloud stores
+    sync	Clean cloud stores, sync all items in Chasm folder by secret-sharing.
 
 GLOBAL OPTIONS:
-   --root "$HOME/Chasm"	Destination of the Chasm secure folder.
+   --root value, -r value	Destination of the Chasm secure folder. (default: "/Users/Alex/Chasm")
    --help, -h			show help
-   --generate-bash-completion
    --version, -v		print the version
 ```
