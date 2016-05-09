@@ -1,0 +1,113 @@
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix,epsfig,endnotes}
+
+
+\usepackage{siunitx} % typesets numbers with units very nicely
+\usepackage{enumerate} % allows us to customize our lists
+%
+\usepackage[T1]{fontenc}
+\usepackage{amssymb, amsmath, graphicx, titling}
+\usepackage[up,bf,raggedright]{titlesec}
+\usepackage{blindtext}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{fancyvrb}
+\usepackage{hyperref}
+
+\begin{document}
+\color{Black}
+\title{Chasm: Fault-Tolerant, Information-Theoretic Secure Cloud Backup using Secret Sharing}
+\author{Alex Grinman, Akshay Ravikumar, Julian Fuchs, Kevin Li \\ \texttt{\{agrinman, akshayr, jfuchs, kmli\}@mit.edu}}
+\date{}
+\maketitle
+
+\begin{abstract}
+Most "secure" cloud backup software encrypts a user's data under a symmetric key that either they store on their computer or backup elsewhere. If a user loses the key when their computer crashes, their encrytped, backed-up data is unrecoverable! Some systems deal with this problem by generating a symmetric key that is dervied from a password the user is asked to memorize. A password sacrifices entropy and ultimately weakens the security of the system. The cost of real security in these types of systems is fault-tolerance, which is the underlying motivation for backing up to the cloud. In this paper we present {\bf Chasm}, a fault-tolerant secure cloud backup solution based on Shamir's $k$-out-of-$n$ secret-sharing scheme.
+\end{abstract}
+
+\section{Motivation}
+There are many commericial backup solutions that claim to provide confidentiallity and integrity of user data. Some examples include Mozy, Carbonite, Crashplan, and Backblaze. All of these products essentially work the same way: data is encrytped using symmetric encryption along with an messege authentication code for integrity and sent to the storage service's cloud data store. Unfortunately, this mechanism of encrypting the data does not solve any problem, it simply concentrates the problem in a short symmetric key. The maintainence of this symmetric key is central to the fundamental security of the system.
+\\\\
+The threat model that most of these existing solutions operate under is that the adversary is a "hacker" who breaks into the storage service and steals data. Hence, in this adversarial model, the hacker will not be able to decrypt the data without the key.
+\\\\
+However, we find three problems with this solution:
+\begin{enumerate}
+	\item {\bf Low-entropy for password based derived keys.} If the symmetric key used is dervided from a user memorizable password, then the entropy of the key is much lower, and therefore a hacker or even the a powerful cloud storage service could decrypt the data by brute-force guessing the password.
+
+	\item {\bf Fault-tolerance for lost keys.} If the symmetric key is not password-derviced, it must be random and too long to memorize, hence the user must store it somewhere. This defeats the purpose of performing the cloud backup in the first place, as now if they key is lost due to a computer crashing, the data is irrecoverable.
+
+	\item {\bf Usability.} Remembering passwords or storing keys is an extra hassle for the user, which makes system less usable. In fact, most users do not encrypt their personal cloud backup either because the software is too complicated or the extra burden is simply not worth the promised protection.
+\end{enumerate}
+
+\section{Introduction}
+With these motivating flaws of existing solution in mind, we present the design and implementation of Chasm, a secure cloud backup solution that is truly fault-tolerant and provides information-theoretic confidentiality and integrity based on Shamir's Secret Sharing Scheme.
+\\\\
+The Chasm system is designed for the every-day user. Chasm has no passwords and provides a user-interface that everyone already knows: simply drag and drop a file into the Chasm folder, and the rest is taken care of.
+\\\\
+Chasm operates over already existing, independently operated cloud storage services like Dropbox, Google Drive, iCloud Drive, Microsoft One Drive, or AWS, which most users today already have accounts with.
+\\\\
+The security strength of Chasm is determined by $N$, the number of cloud services the user has delegated Chasm to use, and $K$ the user chosen recoverability threshold. Chasm secret share the user's private data between $N$ cloud storage services, setting the recoverability threshold to $K$ using Shamir's scheme.
+
+\section{Threat-Model}
+Before we describe the details of Chasm, we first present our adversarial and threat models. We consider the following adversaries:
+\begin{enumerate}
+
+	\item {\bf A Malicious Cloud Storage Service} is motivated to read user data for a variety of reasons like system performance upgrades, market research, or possibly even to sell for more profits.
+
+	\item {\bf A Hacker who breaks into a storage service} motivated to find valuable user data to expose for blackmail, sell, or even use to access bank accounts.
+
+	\item {\bf A Nation-state actor} could be motivated to learn more about a political dissident or state enemy, spy on its own citizens, or spy on citizens of foreign countries.
+\end{enumerate}
+\\\\
+Given these adversaries, we consider the following threats:
+\begin{itemize}
+	\item Cloud storage services can directly read and copy any data that they are storing for the user
+	\item Large cloud hosting services, nation state actors, or even hackers can have large computational resources, which may allow them to brute-force the passwords or weak keys
+	\item A nation-state actor (like the NSA for example) can by legal means coerce $K$ of the storage services to leak user-data.
+	\item A nation-state actor may even by legal means require the cloud storage services to deny the user access to their data, thereby causing a denial-of-service attack.
+
+\end{itemize}
+Chasm is designed to defend against these adversial threats with the assumption that at-least $K$-out-of-$N$ cloud storage services are not corrupted in these ways.
+
+\section{Related Systems using Secret Sharing for data backup}
+[KEVIN]
+
+
+\section{How Chasm Works}
+[JULIAN]
+
+\section{System Gurantees}
+[AKSHAY]
+
+Our system uses Shamir's Secret Sharing Scheme, which is information-theoretic secure. In schemes where data is simply encrypted with a key or a user-created password, the types of organizations which host large cloud servers, if malicious, could devote a very large amount of computing power to guess the password or even break a weak symmetric key. The motivation behind a malicious cloud service might be economical; suppose they want to sell user data. However, in our scheme, less than $x$ shares reveal no information about the data.
+
+So long as the $n$ cloud storage parties, like Dropbox and Google Drive do not collude, the data is secure even if one of the parties turns malicious or is compromised. Furthermore, the user can decide $x$ and $n$ for themselves (given enough supported storage services).
+
+In some schemes, losing control of all data in a computer can also result in the loss of a secret key used to encrypt backups. Or, passwords used to encrypt data can be forgotten. In this system, there are no passwords or keys to forget or compromise, and even if all data on a computer is lost, the shared data can simply be retrieved from the two cloud parties and recombined. Similarly, if access to a cloud account is lost, the data can still be recovered, either because the computer contains a share, or the computer simply contains the plaintext.
+
+\section{Usability}
+[AKSHAY]
+
+There are no encryption keys to store or remember. Simply drag-and-drop to secure a folder. Additionally, there are no extra passwords required other than whatever authentication is necessary to access cloud storage services like Dropbox and Google Drive accounts. Restoring the secret shares can happen on any device and all the "security" happens behind the scenes.
+
+Additionally, since our value of $n$ is relatively small for common use cases (in our example we use $n=2$), the scheme should be fairly efficient, in both uploading files and recovering them. Nevertheless, it is not necessarily important for the scheme to be fast, given that uploading and computation of shares can be done in the background, and users might not necessarily mind if recovery takes a while, given that a loss of data does not happen very often.
+
+
+\section{Vulnerabilities in Chasm and Proposed Solutions}
+[KEVIN]
+
+Possible future additions to the core project concept include:
+
+\begin{itemize}
+	\item Support for more storage services, allowing larger values for $x$ and $n$
+    \item Storing the uploaded files as blocks of uniform size to obscure their size
+    \item Encrypting the data before uploading
+    \item Detecting if the storage services have colluded (possibly not feasible)
+    \item GUI for setup and login instead of command-line utility
+\end{itemize}
+\section{ Next Steps}
+[KEVIN]
+\section{Citations}
+[KEVIN: you did the most research on other systems so im sure you have a bunch of links to cite.]
+
+
+\end{document}
