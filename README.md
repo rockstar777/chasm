@@ -1,7 +1,6 @@
 # chasm
 Secure multi-party cloud backup solution based on Shamir's Secret Sharing scheme.
 
-Slides: https://alexgr.in/chasm
 Demo:
 [![asciicast](https://asciinema.org/a/2loda9ax8s22bvnl6nl5e728s.png)](https://asciinema.org/a/2loda9ax8s22bvnl6nl5e728s)
 
