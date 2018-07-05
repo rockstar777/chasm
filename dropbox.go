@@ -5,57 +5,76 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 	"github.com/fatih/color"
-	"github.com/stacktic/dropbox"
 	"github.com/toqueteos/webbrowser"
+	"golang.org/x/net/context"
+	"golang.org/x/oauth2"
 )
 
 type DropboxStore struct {
-	Dropbox     dropbox.Dropbox `json:"dropbox"`
+	Dropbox     users.Client
 	AccessToken string
-	UserID      int
+	UserID      string
+	config dropbox.Config
 }
+
+
 
 func GetClientKeys() (key, secret string) {
 	return DropboxClientKey, DropboxClientSecret
 }
 
+func connect(key,secret,code string)  *oauth2.Token{
+	ctx := context.Background()
+	conf := &oauth2.Config{
+		ClientID:     key,
+		ClientSecret: secret,
+		Endpoint:  dropbox.OAuthEndpoint(""),
+			}
+	tok, err := conf.Exchange(ctx, code)
+	return tok 
+}
+
 func (d *DropboxStore) Setup() bool {
-	db := dropbox.NewDropbox()
+	
 	key, secret := GetClientKeys()
-	db.SetAppInfo(key, secret)
-
-	tok, err := getDropboxTokenFromWeb()
+	
+	code, err := getDropboxTokenFromWeb()
+	tok := connect(key,secret,code)
+	config := dropbox.Config{
+      		Token: tok.AccessToken,
+      		LogLevel: dropbox.LogOff,
+  				}
+	db := users.New(config)
+	
 	if err != nil {
 		color.Red("Unable to get client token: %v", err)
 		return false
 	}
 
-	err = db.AuthCode(tok)
-	if err != nil {
-		color.Red("Unable to get client token: %v", err)
-		return false
-	}
+	
 
-	account, err := db.GetAccountInfo()
+	account, err := db.GetCurrentAccount()
 	if err != nil {
 		color.Red("Unable to get account information: %v", err)
 		return false
 	}
 
-	uid := account.UID
+	uid := account.AccountId
 	for _, d := range preferences.DropboxStores {
 		if d.UserID == uid {
-			color.Red("Account for %s already exists.", account.DisplayName)
+			color.Red("Account for %s already exists.", account.Name.DisplayName)
 			return false
 		}
 	}
 
-	// set the oauth info
-	d.Dropbox = *db
-	d.AccessToken = db.AccessToken()
+	
+	d.Dropbox = db
+	d.AccessToken = tok.AccessToken
 	d.UserID = uid
+	d.config = config
 
 	return true
 }

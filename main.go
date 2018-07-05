@@ -232,11 +232,11 @@ func main() {
 	app.Usage = color.GreenString("A secret-sharing based secure cloud backup solution.")
 	app.EnableBashCompletion = true
 	app.Version = "0.1"
-
+	
 	usr, _ := user.Current()
 	defaultRoot := path.Join(usr.HomeDir, "Chasm")
 	chasmRoot = defaultRoot
-
+	
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "root, r",
