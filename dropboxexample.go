@@ -1,11 +1,14 @@
-package dropboxexample
+package main
 
 
 import (
 	"fmt"
+	"errors"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users"	
 	"os"
+	"path/filepath"
+	"io/ioutil"
 	"text/tabwriter"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -16,18 +19,51 @@ import (
 	"io"
 	"github.com/dustin/go-humanize"
 	"time"
-
+	"github.com/toqueteos/webbrowser"
+	"strings"
 	
 )
 
 
 
-
-
 var config dropbox.Config
-
+type TokenMap map[string]map[string]string
 const chunkSize int64 = 1 << 24
+
+func check(e error){
+	if e!=nil {
+		panic(e)
+}
+}
+
+func readtoken(filePath string)(string ,error){
+	b, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+
+
+
+	return string(b), nil
+	
+}
+
+
+func writetoken(filePath string,p string){
+		
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		// Doesn't exist; lets create it
+		err = os.MkdirAll(filepath.Dir(filePath), 0700)
+		check(err)
+	}
+	b:=[]byte(p)
+	err := ioutil.WriteFile(filePath, b, 0600)
+	check(err)
+	
+}
 func confffiggg() {
+filePath := path.Join("/home/rockstar", "dbxcli", "test.txt")
 
 ctx := context.Background()
 conf := &oauth2.Config{
@@ -35,11 +71,14 @@ conf := &oauth2.Config{
     ClientSecret: "axs0n3htxsn6o5f",
     Endpoint: dropbox.OAuthEndpoint(""),
 }
-
-
+token,err := readtoken(filePath);if err!=nil{
+panic(err)
+}
+if token=="" {
 
 url := conf.AuthCodeURL("state")
 fmt.Printf("Visit the URL for the auth dialog: %v", url)
+webbrowser.Open(url)
 
 
 var code string
@@ -51,13 +90,15 @@ tok, err := conf.Exchange(ctx, code)
 if err != nil {
     log.Fatal(err)
 }
-
+token =tok.AccessToken
+writetoken(filePath,token)
+}
 //client := conf.Client(ctx, tok)
  config = dropbox.Config{
-      Token: tok.AccessToken,
+      Token: token,
       LogLevel: dropbox.LogOff, // if needed, set the desired logging level. Default is off
   }
-	
+
 
 }
 
@@ -171,13 +212,41 @@ func put(src, dst string) (err error) {
 	return
 }
 
+func validatePath(p string) (path string, err error) {
+	path = p
 
+	if !strings.HasPrefix(path, "/") {
+		path = fmt.Sprintf("/%s", path)
+	}
+
+	path = strings.TrimSuffix(path, "/")
+
+	return
+}
+
+func mkdir(p string) (err error) {
+	if p=="" {
+		return errors.New("`mkdir` requires a `directory` argument")
+	}
+
+	dst, err := validatePath(p)
+	if err != nil {
+		return
+	}
+
+	arg := files.NewCreateFolderArg(dst)
+
+	dbx := files.New(config)
+	if _, err = dbx.CreateFolderV2(arg); err != nil {
+		return
+	}
+
+	return
+}
 
 func main () {
-	confffiggg()
-
-
-
+confffiggg()
+mkdir("pk")
 fmt.Println(test())
 var src string
 fmt.Scan(&src);

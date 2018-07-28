@@ -96,6 +96,7 @@ func (d DropboxStore) Upload(share Share) {
 	fmt.Print(color.MagentaString("\u2713\n"))
 }
 
+
 func (d DropboxStore) Delete(sid ShareID) {
 	key, secret := GetClientKeys()
 	d.Dropbox.SetAppInfo(key, secret)
